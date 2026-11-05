@@ -1,196 +1,68 @@
-<div align="center">
+# Aurora · Showcase release
 
-# Aurora ✨
+A bounded polish release of the original five-person Flutter course project. The browser demo reuses the real dashboard, journal, timeline, and support tools with a fictional, session-only journal. AI examples are prerecorded. No account, location permission, notification permission, Firebase connection, or API key is required.
 
-Mental wellness & personal growth companion built with Flutter & Firebase.
+## Run the demo
 
-[![License](https://img.shields.io/github/license/sunnypatell/csci4100u-aurora?style=flat-square)](LICENSE)
-[![Issues](https://img.shields.io/github/issues/sunnypatell/csci4100u-aurora?style=flat-square)](https://github.com/sunnypatell/csci4100u-aurora/issues)
-[![Pull Requests](https://img.shields.io/github/issues-pr/sunnypatell/csci4100u-aurora?style=flat-square)](https://github.com/sunnypatell/csci4100u-aurora/pulls)
-[![Last Commit](https://img.shields.io/github/last-commit/sunnypatell/csci4100u-aurora?style=flat-square)](https://github.com/sunnypatell/csci4100u-aurora/commits/main)
-[![Flutter](https://img.shields.io/badge/Flutter-3.x-blue?logo=flutter&style=flat-square)](https://flutter.dev)
-[![Firebase](https://img.shields.io/badge/Firebase-Active-orange?logo=firebase&style=flat-square)](https://firebase.google.com)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](#-contributing)
+Use **Flutter 3.35.3 / Dart 3.9.2**, matching CI and the verified release toolchain:
 
-</div>
-
-## Overview
-Aurora is a cross‑platform (Android, iOS, Web) Flutter application focused on mental health support, habit reflection, and contextual help resources. It integrates journaling, timeline tracking, resource discovery, chat, and proximity-based assistance features; powered by Firebase services.
-
-> This project is a CSCI 4100U course group submission. While it aims for production quality structure, it remains an active academic build. Suggestions & improvements are welcome.
-
-## Key Features
-- Secure authentication & session handling (Firebase Auth)
-- Personal journal entries with persistence (Cloud Firestore)
-- Chat interface (planned real‑time messaging)
-- Resource hub (curated wellness + support materials)
-- "Help Near Me" location-aware assistance (design stage)
-- Dashboard & timeline visualizations for progress tracking
-- Push notifications (Firebase Cloud Messaging)
-- Multi‑platform Flutter build pipeline
-- Remote motivational quote via HTTP (RealInspire API) in Resources
-
-## Tech Stack
-- **Framework:** Flutter (Dart)
-- **Backend Services:** Firebase (Auth, Firestore, Cloud Messaging, Analytics)
-- **CI/CD:** (Planned GitHub Actions workflow)
-- **Platforms Targeted:** Android, iOS, Web, Windows, macOS, Linux
-
-## Project Structure (High-Level)
-```
-aurora_app/
-	lib/
-		screens/        # UI screens (dashboard, journal, chat, etc.)
-		services/       # Abstracted app logic (auth, journal, notifications)
-		widgets/        # Reusable presentation components
-		firebase_options.dart  # Generated Firebase config
-	assets/           # Images & static assets
-	android/ios/...   # Platform-specific Flutter scaffolding
-	test/             # Widget & unit tests
-```
-
-## Screens (Implemented / In Progress)
-- `landing_screen.dart` – Entry & onboarding flow
-- `home_screen.dart` – Main navigation hub
-- `dashboard_screen.dart` – Overview metrics & summaries
-- `journal_screen.dart` – Create & browse personal entries
-- `timeline_tab.dart` – Chronological reflection / activity stream
-- `chat.dart` – Placeholder for real‑time messaging (integration pending)
-- `help_near_me.dart` – Contextual nearby support (prototype phase)
-- `resources.dart` – Curated resource listing
-- `settings_screen.dart` – Profile & app preferences
-
-## Group Members
-| Name |
-|------|
-| Sunny Patel |
-| Sanhith Amarathunge |
-| Aakanksha Parekh |
-| Paul Joseph |
-| Suthashan Tharmarajah |
-
-## Quick Start (Windows PowerShell)
-```powershell
-git clone https://github.com/sunnypatell/csci4100u-aurora.git
-cd csci4100u-aurora/aurora_app
-flutter pub get
-flutter run
-```
-## Gemini AI Key Setup
-
-Aurora's AI features (journal insight, contextual chat, conversation title generation) require a Gemini API key loaded from an environment file.
-
-Setup via CLI (Windows PowerShell):
-```powershell
+```sh
 cd aurora_app
-cp .env.example .env
-```
-Then open the `.env` file in your editor and replace `YOUR_KEY_HERE` with your real Gemini API key. Save the file before running.
-
-Run the app:
-```powershell
-flutter pub get
-flutter run
+flutter pub get --enforce-lockfile
+flutter run -d chrome -t lib/main_demo.dart
 ```
 
-For Web builds if you decide to run on chrome, pass the key via dart-define:
-```powershell
-cd aurora_app
-flutter pub get
-flutter run -d chrome --dart-define=GEMINI_API_KEY=<YOUR_KEY_HERE>
-```
-Your final command for web should look like:
-```powershell
-flutter run -d chrome --dart-define=GEMINI_API_KEY=abracadabra_blah.blah.blah.12345.
-```
+The seed contains 30 days of fictional entries. Create, edit, delete, search, filter, and inspect trends through the existing journal UI. Reset demo restores the sample journal and disposes active timers; refreshing starts a new session. Please use fictional text. No browser storage persists journal changes.
 
-
-If the key is missing, AI responses will return a friendly message indicating configuration is needed.
-
-Security notes:
-- The `.env` file is gitignored; do not commit real keys.
-- Rotate keys immediately if leaked.
-- For production, prefer a backend proxy or secure secret manager.
-
-
-### Prerequisites
-- Install Flutter SDK (`>=3.x`).
-- Ensure Dart is bundled (with Flutter install).
-- Node.js for Firebase CLI.
-- A Firebase project with enabled Auth + Firestore + Messaging.
-
-### Firebase Configuration
-1. Create a Firebase project in the Firebase console.
-2. Enable **Email/Password** (and other desired) authentication providers.
-3. Create Firestore DB in production or test mode per requirements.
-4. (Optional) Set up Cloud Messaging for push notifications.
-5. Run `flutterfire configure` from `aurora_app/` to generate `lib/firebase_options.dart`.
-6. Add platform configs (`google-services.json`, `GoogleService-Info.plist`) already present / update as needed.
-
-## Development Scripts (Suggested)
-| Command | Purpose |
-|---------|---------|
-| `flutter pub get` | Install dependencies |
-| `flutter analyze` | Static analysis (lint) |
-| `flutter test` | Run test suite |
-| `flutter run -d chrome` | Launch web build |
-| `flutter build apk` | Produce Android release artifact |
-
-## Testing
-Run widget tests:
-```powershell
+```sh
+flutter analyze
 flutter test
+flutter build web --release -t lib/main_demo.dart --no-web-resources-cdn --pwa-strategy=none
 ```
-Add more tests under `test/` for services & UI states (e.g., authentication flows, journal CRUD, notification triggers).
 
-## Roadmap
-- Integrate real‑time chat (Firestore listener / WebSockets alternative)
-- Add mood tracking & analytics dashboard
-- Implement offline sync layer
-- Role-based resource personalization
-- CI workflow (GitHub Actions) for build + analyze + test
-- Accessibility audit (contrast, semantic widgets)
-- Internationalization (i18n) scaffolding
+Serve `aurora_app/build/web` over HTTP. `node tools/prepare-demo.mjs` adds the standalone demo's response headers. Its Cloudflare assets configuration is in `wrangler.jsonc`. The renderer and fonts are hosted locally. This demo has its own policy because Flutter's WebAssembly renderer requires `wasm-unsafe-eval`; the portfolio's script policy does not need that permission.
 
-## Contributing
-We welcome thoughtful contributions. For external contributors (post-course):
-1. Fork the repo.
-2. Create feature branch: `git checkout -b feature/your-feature`.
-3. Commit with conventional messages (e.g., `feat: add journal filtering`).
-4. Run `flutter analyze` & `flutter test` before PR.
-5. Open Pull Request with description & screenshots if UI related.
+For the production browser smoke test, run `npm ci`, `npx playwright install chromium ffmpeg`, then `npm run test:browser` from the repository root after building and preparing the demo. The test launches its own local server and checks journal creation, edits, chart updates, reset, focus timer, mobile navigation, and absence of external requests/CSP errors. Screenshots and a recording are saved under ignored `.artifacts/`. `npm run preview` starts a persistent preview on port 8790. Set `AURORA_BROWSER_CHANNEL=chrome` to test an installed Chrome instead of Playwright's Chromium.
 
-### Code Style
-- Follow Dart & Flutter best practices.
-- Keep widgets small & composable.
-- Avoid logic in UI layer; prefer `services/` abstractions.
+## Run the Firebase-backed app locally
 
-## Security & Privacy
-- Do not commit secrets or service account keys.
-- Use environment-based Firebase project separation for staging vs production.
-- Sanitize any user-generated content displayed publicly.
+The fork never defaults to the original team's Firebase project. For an isolated local environment, use Node 22, Java 21, and the Firebase emulators:
 
-## Troubleshooting
-| Issue | Possible Fix |
-|-------|--------------|
-| Firebase auth fails | Re-run `flutterfire configure`; check API keys |
-| Assets not loading | Run `flutter pub get`; verify `pubspec.yaml` assets section |
-| iOS build errors | Open Xcode, run pod install in `ios/` if needed |
-| Web blank screen | Clear cache; run with `flutter run -d chrome --web-renderer html` |
-| Android gradle sync | Delete `.gradle/` then `flutter clean` & retry |
+```sh
+# Repository root
+npm ci
+npx firebase emulators:start --project demo-aurora --only auth,firestore
+```
 
-## License
-Distributed under the terms of the MIT License. See [`LICENSE`](LICENSE) for details.
+In a second terminal:
 
-## Acknowledgements
-- Flutter & Firebase teams for tooling.
-- Open source mental health initiative inspirations.
-- Course faculty for project guidance.
+```sh
+cd aurora_app
+flutter run -d chrome --dart-define=USE_FIREBASE_EMULATORS=true
+```
 
----
-Made with curiosity, care, and Flutter 💙
+Create a fictional account in the app. Auth runs on port 9099 and Firestore on 8080. The emulators are separate from the demo and do not contact the team's backend. Set `FIREBASE_EMULATOR_HOST` if the browser/device cannot reach `127.0.0.1`.
 
-## Feature Matrix
-| Feature | Status | Notes |
-|---------|--------|-------|
-| HTTP Remote Quote (ZenQuotes) | ✅ Implemented | Fetch & refresh daily encouragement card in `resources.dart` |
+For your own Firebase project, enable email/password authentication and Firestore, configure authorized domains, review and deploy `firestore.rules` to that project explicitly, then pass public client configuration:
+
+```sh
+flutter run -d chrome --dart-define=FIREBASE_PROJECT_ID=YOUR_PROJECT --dart-define=FIREBASE_API_KEY=YOUR_PUBLIC_FIREBASE_CLIENT_KEY --dart-define=FIREBASE_APP_ID=YOUR_WEB_APP_ID --dart-define=FIREBASE_AUTH_DOMAIN=YOUR_PROJECT.firebaseapp.com --dart-define=FIREBASE_MESSAGING_SENDER_ID=YOUR_SENDER_ID
+```
+
+Firebase client configuration is public identification, not authorization; the security rules enforce ownership. Legacy generated mobile platform configuration is retained from the academic project and must be regenerated for your own project before mobile distribution.
+
+## AI and notifications
+
+Release builds intentionally disable direct Gemini calls. There is no `.env` asset and no live AI in the demo. Personal debug builds can opt in with `--dart-define=GEMINI_API_KEY=...`; that key is exposed to the client and must never be used in a public distribution. A real-user AI product needs an authenticated, rate-limited backend proxy, which is outside this release.
+
+Native notification initialization is optional; permission requests occur through Settings. Web notifications are unsupported. Android/iOS release artifacts have not been certified by this web-focused release.
+
+## Tests and release scope
+
+`npm run test:rules` starts an isolated Firestore emulator and tests journal ownership, guest denial, valid edits/deletion, and invalid writes. CI also runs Dart analysis, Flutter tests, and the web release build.
+
+See `docs/REVIEW.md` for reviewed issues, changes, and remaining work. This is a student wellness prototype, not a medical service. It is not offered as an operated real-user service and has no promised maintenance cadence. Original academic documentation is retained in `docs/ORIGINAL_README.md`.
+
+## Credits and license
+
+Original project: Sunny Patel, Sanhith Amarathunge, Aakanksha Parekh, Paul Joseph, and Suthashan Tharmarajah. Showcase polish by Sanhith Amarathunge. Original MIT license retained in `LICENSE`.

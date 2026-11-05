@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'auth/login_screen.dart';
+
 /// LandingScreen
 ///
 /// Unauthenticated entry point presenting calming branding (glowing candle)
@@ -22,11 +23,12 @@ class LandingScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Spacer(flex: 2), // reserve top vertical breathing room
-              
+
               _buildGlowingCandle(),
-              
-              const SizedBox(height: 56), // generous gap isolates hero from title
-              
+
+              const SizedBox(
+                  height: 56), // generous gap isolates hero from title
+
               const Text(
                 'Aurora',
                 style: TextStyle(
@@ -37,9 +39,9 @@ class LandingScreen extends StatelessWidget {
                   height: 1.2,
                 ),
               ),
-              
+
               const SizedBox(height: 20), // moderate spacing before tagline
-              
+
               const Text(
                 'A private space to pause, breathe, and\nunderstand your mind.',
                 textAlign: TextAlign.center,
@@ -51,13 +53,14 @@ class LandingScreen extends StatelessWidget {
                   letterSpacing: 0.2,
                 ),
               ),
-              
-              const SizedBox(height: 56), // strong emphasis separation before primary CTA
-              
+
+              const SizedBox(
+                  height: 56), // strong emphasis separation before primary CTA
+
               _buildBeginButton(context),
-              
+
               const SizedBox(height: 28), // subtle affirmation spacing
-              
+
               const Text(
                 'Your thoughts stay yours. Always.',
                 style: TextStyle(
@@ -67,8 +70,10 @@ class LandingScreen extends StatelessWidget {
                   letterSpacing: 0.1,
                 ),
               ),
-              
-              const Spacer(flex: 3), // bottom space ensures centered feel across device heights
+
+              const Spacer(
+                  flex:
+                      3), // bottom space ensures centered feel across device heights
             ],
           ),
         ),

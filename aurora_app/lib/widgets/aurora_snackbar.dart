@@ -14,7 +14,8 @@ import 'package:flutter/material.dart';
 enum AuroraSnackVariant { success, error, info, alert }
 
 OverlayEntry? _currentAuroraSnack;
-OverlayState? _overlayState; // store overlay directly to avoid disposed context lookups
+OverlayState?
+    _overlayState; // store overlay directly to avoid disposed context lookups
 final List<_QueuedSnack> _snackQueue = [];
 
 class _QueuedSnack {
@@ -65,7 +66,8 @@ void _displaySnack(_QueuedSnack snack) {
         _currentAuroraSnack = null;
         if (_snackQueue.isNotEmpty) {
           final next = _snackQueue.removeAt(0);
-          WidgetsBinding.instance.addPostFrameCallback((_) => _displaySnack(next));
+          WidgetsBinding.instance
+              .addPostFrameCallback((_) => _displaySnack(next));
         }
       },
     ),
@@ -211,9 +213,11 @@ class _AuroraSnackOverlayState extends State<_AuroraSnackOverlay>
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 240));
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 240));
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
-    _slide = Tween(begin: const Offset(0, 0.15), end: Offset.zero).animate(_fade);
+    _slide =
+        Tween(begin: const Offset(0, 0.15), end: Offset.zero).animate(_fade);
     _ctrl.forward();
     Future.delayed(widget.duration, _dismiss);
   }

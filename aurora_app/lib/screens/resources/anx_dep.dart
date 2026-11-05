@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../config/app_mode.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui';
@@ -117,6 +118,7 @@ class _AnxietyDepressionHelpPageState extends State<AnxietyDepressionHelpPage>
   final TextEditingController _reasonController = TextEditingController();
 
   CollectionReference<Map<String, dynamic>>? get _reasonsCol {
+    if (AppMode.isDemo) return null;
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return null;
     return FirebaseFirestore.instance
@@ -140,7 +142,9 @@ class _AnxietyDepressionHelpPageState extends State<AnxietyDepressionHelpPage>
     if (col == null) {
       showAuroraSnackBar(
         context,
-        'Sign in to save reasons',
+        AppMode.isDemo
+            ? 'Saving reasons is unavailable in this demo. Try the Journal instead.'
+            : 'Sign in to save reasons',
         variant: AuroraSnackVariant.error,
       );
       return;
@@ -454,11 +458,12 @@ class _AnxietyDepressionHelpPageState extends State<AnxietyDepressionHelpPage>
                             end: Alignment.bottomRight,
                           ),
                           boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF64B5F6).withValues(alpha: 0.35),
-                                blurRadius: 18,
-                                offset: const Offset(0, 8),
-                              ),
+                            BoxShadow(
+                              color: const Color(0xFF64B5F6)
+                                  .withValues(alpha: 0.35),
+                              blurRadius: 18,
+                              offset: const Offset(0, 8),
+                            ),
                           ],
                         ),
                         child: Center(
@@ -677,13 +682,15 @@ class _AnxietyDepressionHelpPageState extends State<AnxietyDepressionHelpPage>
                             ),
                           );
                         }
-                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
                           return const Padding(
                             padding: EdgeInsets.all(8.0),
                             child: SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2)),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2)),
                           );
                         }
                         final docs = snapshot.data?.docs ?? [];
@@ -711,7 +718,8 @@ class _AnxietyDepressionHelpPageState extends State<AnxietyDepressionHelpPage>
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.05),
+                                        color: Colors.black
+                                            .withValues(alpha: 0.05),
                                         blurRadius: 4,
                                         offset: const Offset(0, 2),
                                       ),
@@ -731,7 +739,8 @@ class _AnxietyDepressionHelpPageState extends State<AnxietyDepressionHelpPage>
                                       const SizedBox(width: 6),
                                       InkWell(
                                         onTap: () => _deleteReason(d.id),
-                                        borderRadius: BorderRadius.circular(999),
+                                        borderRadius:
+                                            BorderRadius.circular(999),
                                         child: const Icon(
                                           Icons.close_rounded,
                                           size: 16,
@@ -895,16 +904,16 @@ class _BreathingDogFace extends StatelessWidget {
             ),
           ),
           // eyes
-            const Positioned(
-              top: 55,
-              left: 46,
-              child: _Eye(),
-            ),
-            const Positioned(
-              top: 55,
-              right: 46,
-              child: _Eye(),
-            ),
+          const Positioned(
+            top: 55,
+            left: 46,
+            child: _Eye(),
+          ),
+          const Positioned(
+            top: 55,
+            right: 46,
+            child: _Eye(),
+          ),
           // nose
           Positioned(
             bottom: 44,
@@ -970,21 +979,21 @@ class _BreathingDogFace extends StatelessWidget {
   }
 }
 
-  class _Eye extends StatelessWidget {
-    const _Eye();
-  
-    @override
-    Widget build(BuildContext context) {
-      return Container(
-        width: 10,
-        height: 10,
-        decoration: const BoxDecoration(
-          color: Color(0xFF263238),
-          shape: BoxShape.circle,
-        ),
-      );
-    }
+class _Eye extends StatelessWidget {
+  const _Eye();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 10,
+      height: 10,
+      decoration: const BoxDecoration(
+        color: Color(0xFF263238),
+        shape: BoxShape.circle,
+      ),
+    );
   }
+}
 
 class _GlassCard extends StatelessWidget {
   final Widget child;
@@ -997,7 +1006,7 @@ class _GlassCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(22),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
+        child: Container(
           padding: const EdgeInsets.all(16),
           margin: const EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(

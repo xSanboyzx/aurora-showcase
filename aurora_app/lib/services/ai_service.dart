@@ -34,12 +34,13 @@ class AiService {
     required String usermood,
   }) async {
     if (!isConfigured) {
-      return "AI is not set up yet. Please add an API key.";
+      return "Live AI is unavailable in this release. Journaling and support tools work without it.";
     }
 
     try {
       final prompt = _buildPrompt(entryText: journalText, mood: usermood);
-      final uri = Uri.parse("$_baseUrl/$_modelPath:generateContent?key=$_apiKey");
+      final uri =
+          Uri.parse("$_baseUrl/$_modelPath:generateContent?key=$_apiKey");
 
       final body = {
         "contents": [
@@ -51,11 +52,13 @@ class AiService {
         ]
       };
 
-      final response = await http.post(
-        uri,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(body),
-      );
+      final response = await http
+          .post(
+            uri,
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 20));
 
       if (response.statusCode != 200) {
         return "Sorry, I couldn't generate insight right now. (Error ${response.statusCode})";
@@ -80,7 +83,7 @@ class AiService {
     String? journalContext,
   }) async {
     if (!isConfigured) {
-      return "AI is not set up yet. Please add an API key.";
+      return "Live AI is unavailable in this release. Journaling and support tools work without it.";
     }
 
     try {
@@ -91,7 +94,8 @@ class AiService {
         journalContext: journalContext,
       );
 
-      final uri = Uri.parse("$_baseUrl/$_modelPath:generateContent?key=$_apiKey");
+      final uri =
+          Uri.parse("$_baseUrl/$_modelPath:generateContent?key=$_apiKey");
       final body = {
         "contents": [
           {
@@ -102,11 +106,13 @@ class AiService {
         ]
       };
 
-      final response = await http.post(
-        uri,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(body),
-      );
+      final response = await http
+          .post(
+            uri,
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 20));
 
       if (response.statusCode != 200) {
         return "Sorry, I'm having trouble right now. Try again?";
@@ -158,7 +164,8 @@ class AiService {
       buf.writeln('Aurora: $aiReply');
       buf.writeln('\nTITLE:');
 
-      final uri = Uri.parse("$_baseUrl/$_modelPath:generateContent?key=$_apiKey");
+      final uri =
+          Uri.parse("$_baseUrl/$_modelPath:generateContent?key=$_apiKey");
       final body = {
         "contents": [
           {
@@ -169,21 +176,29 @@ class AiService {
         ]
       };
 
-      final response = await http.post(
-        uri,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode(body),
-      );
+      final response = await http
+          .post(
+            uri,
+            headers: {"Content-Type": "application/json"},
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 20));
       if (response.statusCode != 200) return '';
       final data = jsonDecode(response.body);
       final raw = _extractText(data);
       if (raw == null) return '';
       var cleaned = raw.trim();
       // Strip leading/trailing quote/backtick characters without regex (safer for grading environment).
-      while (cleaned.isNotEmpty && (cleaned.startsWith('"') || cleaned.startsWith("'") || cleaned.startsWith('`'))) {
+      while (cleaned.isNotEmpty &&
+          (cleaned.startsWith('"') ||
+              cleaned.startsWith("'") ||
+              cleaned.startsWith('`'))) {
         cleaned = cleaned.substring(1);
       }
-      while (cleaned.isNotEmpty && (cleaned.endsWith('"') || cleaned.endsWith("'") || cleaned.endsWith('`'))) {
+      while (cleaned.isNotEmpty &&
+          (cleaned.endsWith('"') ||
+              cleaned.endsWith("'") ||
+              cleaned.endsWith('`'))) {
         cleaned = cleaned.substring(0, cleaned.length - 1);
       }
       // Collapse newlines and remove non-printable ASCII.

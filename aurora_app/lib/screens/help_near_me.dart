@@ -59,7 +59,8 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
   void initState() {
     super.initState();
     _initLocationAndPois();
-    _searchController.addListener(() => _onSearchChanged(_searchController.text));
+    _searchController
+        .addListener(() => _onSearchChanged(_searchController.text));
   }
 
   @override
@@ -87,11 +88,13 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         return _fallbackCenter;
       }
 
-      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      final position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
       return LatLng(position.latitude, position.longitude);
     } catch (_) {
       return _fallbackCenter;
@@ -138,12 +141,14 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
     });
   }
 
-  void _showPoiDialog(BuildContext ctx, Map<String, dynamic> poi, double distanceMeters) {
+  void _showPoiDialog(
+      BuildContext ctx, Map<String, dynamic> poi, double distanceMeters) {
     showDialog(
       context: ctx,
       builder: (dctx) => AlertDialog(
         title: Text(poi['name'] as String),
-        content: Text('Distance: ${(distanceMeters / 1000).toStringAsFixed(1)} km'),
+        content:
+            Text('Distance: ${(distanceMeters / 1000).toStringAsFixed(1)} km'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dctx).pop(),
@@ -160,7 +165,9 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
       if (query.isEmpty) {
         _searchResults = List<Map<String, dynamic>>.from(_nearbyPois);
       } else {
-        _searchResults = _nearbyPois.where((p) => (p['name'] as String).toLowerCase().contains(query)).toList();
+        _searchResults = _nearbyPois
+            .where((p) => (p['name'] as String).toLowerCase().contains(query))
+            .toList();
       }
     });
   }
@@ -177,7 +184,8 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final bool inShell = context.findAncestorWidgetOfExactType<AuroraShell>() != null;
+    final bool inShell =
+        context.findAncestorWidgetOfExactType<AuroraShell>() != null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5EFE7),
@@ -261,14 +269,16 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
                       prefixIcon: const Icon(Icons.search),
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 12),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
                       ),
                     ),
                   ),
-                  if (_searchController.text.isNotEmpty && _searchResults.isNotEmpty)
+                  if (_searchController.text.isNotEmpty &&
+                      _searchResults.isNotEmpty)
                     Container(
                       margin: const EdgeInsets.only(top: 8),
                       height: 120,
@@ -291,7 +301,6 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
               ),
             ),
           ),
-
           SliverToBoxAdapter(
             child: _loading
                 ? Container(
@@ -323,27 +332,32 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
                         _lastFocalPoint = details.globalPosition;
                       },
                       onScaleUpdate: (details) {
-                        if ((details.pointerCount >= 2 || _doubleTapPanEnabled) && _center != null) {
+                        if ((details.pointerCount >= 2 ||
+                                _doubleTapPanEnabled) &&
+                            _center != null) {
                           final Offset focal = details.focalPoint;
                           final Offset last = _lastFocalPoint ?? focal;
                           final dx = focal.dx - last.dx;
                           final dy = focal.dy - last.dy;
 
-                          final double latRad = _center!.latitude * (3.1415926535897932 / 180.0);
+                          final double latRad =
+                              _center!.latitude * (3.1415926535897932 / 180.0);
                           double currentZoom = 13.0;
                           try {
                             currentZoom = _mapController.zoom;
                           } catch (_) {}
 
-                          final double metersPerPixel =
-                              156543.03392 * (math.cos(latRad)) / (math.pow(2, currentZoom) as double);
+                          final double metersPerPixel = 156543.03392 *
+                              (math.cos(latRad)) /
+                              (math.pow(2, currentZoom) as double);
 
                           final double deltaLonMeters = -dx * metersPerPixel;
                           final double deltaLatMeters = dy * metersPerPixel;
 
                           final double deltaLatDeg = deltaLatMeters / 111320.0;
-                          final double deltaLonDeg =
-                              deltaLonMeters / (111320.0 * math.cos(latRad).abs().clamp(0.000001, 1.0));
+                          final double deltaLonDeg = deltaLonMeters /
+                              (111320.0 *
+                                  math.cos(latRad).abs().clamp(0.000001, 1.0));
 
                           final LatLng newCenter = LatLng(
                             _center!.latitude + deltaLatDeg,
@@ -366,15 +380,16 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
                             options: MapOptions(
                               center: _center,
                               zoom: 13,
-                              interactiveFlags:
-                                  (InteractiveFlag.all & ~InteractiveFlag.rotate & ~InteractiveFlag.drag),
+                              interactiveFlags: (InteractiveFlag.all &
+                                  ~InteractiveFlag.rotate &
+                                  ~InteractiveFlag.drag),
                             ),
                             children: [
                               TileLayer(
-                                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                urlTemplate:
+                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                                 userAgentPackageName: 'com.example.aurora',
                               ),
-
                               MarkerLayer(
                                 markers: [
                                   if (_center != null)
@@ -390,12 +405,12 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
                                     ),
                                 ],
                               ),
-
                               MarkerClusterLayerWidget(
                                 options: MarkerClusterLayerOptions(
                                   maxClusterRadius: 45,
                                   size: const Size(40, 40),
-                                  fitBoundsOptions: const FitBoundsOptions(padding: EdgeInsets.all(50)),
+                                  fitBoundsOptions: const FitBoundsOptions(
+                                      padding: EdgeInsets.all(50)),
                                   markers: _poiMarkers,
                                   builder: (context, markers) {
                                     return Container(
@@ -417,12 +432,12 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
                               ),
                             ],
                           ),
-
                           Align(
                             alignment: Alignment.topCenter,
                             child: Container(
                               margin: const EdgeInsets.all(8),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.black.withValues(alpha: 0.4),
                                 borderRadius: BorderRadius.circular(12),
@@ -442,7 +457,6 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
                     ),
                   ),
           ),
-
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
             sliver: SliverList(
@@ -463,7 +477,8 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
                   const SizedBox(height: 12),
                   _HelplineTile(
                     title: 'Emergency (Canada)',
-                    subtitle: 'If you or someone is in immediate danger, call 911.',
+                    subtitle:
+                        'If you or someone is in immediate danger, call 911.',
                     actionLabel: 'Call 911',
                     color: Colors.redAccent.shade100,
                     onPressed: () => launchUrl(Uri.parse('tel:911')),
@@ -477,14 +492,16 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
                   ),
                   _HelplineTile(
                     title: 'Kids Help Phone',
-                    subtitle: 'Young people: Call 1-800-668-6868 • Text CONNECT to 686868.',
+                    subtitle:
+                        'Young people: Call 1-800-668-6868 • Text CONNECT to 686868.',
                     actionLabel: 'Call 1-800-668-6868',
                     color: Colors.teal.shade200,
                     onPressed: () => launchUrl(Uri.parse('tel:+18006686868')),
                   ),
                   _HelplineTile(
                     title: 'Talk Suicide Canada',
-                    subtitle: '1-833-456-4566 (24/7) • Text 45645 (4pm–midnight ET).',
+                    subtitle:
+                        '1-833-456-4566 (24/7) • Text 45645 (4pm–midnight ET).',
                     actionLabel: 'Call 1-833-456-4566',
                     color: Colors.amber.shade200,
                     onPressed: () => launchUrl(Uri.parse('tel:+18334564566')),
@@ -494,7 +511,8 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
                     subtitle: '1-855-242-3310 • Chat at hopeforwellness.ca',
                     actionLabel: 'Open Website',
                     color: Colors.indigo.shade200,
-                    onPressed: () => launchUrl(Uri.parse('https://hopeforwellness.ca')),
+                    onPressed: () =>
+                        launchUrl(Uri.parse('https://hopeforwellness.ca')),
                   ),
                   _HelplineTile(
                     title: 'ConnexOntario (Mental Health & Addiction)',
@@ -524,7 +542,6 @@ class _HelpNearMePageState extends State<HelpNearMePage> {
     );
   }
 }
-
 
 class _HelplineTile extends StatelessWidget {
   final String title;

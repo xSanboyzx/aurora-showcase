@@ -17,7 +17,8 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: LandingScreen()));
       expect(find.text('Aurora'), findsOneWidget);
       expect(
-        find.text('A private space to pause, breathe, and\nunderstand your mind.'),
+        find.text(
+            'A private space to pause, breathe, and\nunderstand your mind.'),
         findsOneWidget,
       );
       expect(find.text('Begin reflection'), findsOneWidget);

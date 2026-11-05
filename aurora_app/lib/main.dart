@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart';
+
 /// main.dart
 /// Application entry: initializes Flutter bindings, Firebase (per-platform
 /// options), local notification service, then boots the root `AuroraApp`.
@@ -8,7 +8,8 @@ import 'package:flutter/foundation.dart';
 /// provides a transparent SnackBar theme since we use a custom overlay toast.
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'firebase_options.dart';
+import 'config/firebase_config.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'screens/landing_screen.dart';
 // import 'screens/auth/login_screen.dart'; // not needed when Landing is the unauthenticated start
 import 'screens/aurora_shell.dart';
@@ -18,28 +19,40 @@ import 'services/notifications_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables from .env on non-web platforms.
-  if (!kIsWeb) {
-    try {
-      await dotenv.load(fileName: '.env');
-    } catch (e) {
-      debugPrint('No .env file loaded (fallback to empty env): $e');
-    }
+  if (!FirebaseConfig.isConfigured) {
+    runApp(const _SetupApp(
+        message:
+            'Firebase is not configured. Run the self-contained demo with: flutter run -t lib/main_demo.dart -d chrome. See README for your own Firebase or emulator setup.'));
+    return;
   }
-
-  // Initialize Firebase for the current platform using FlutterFire generated options.
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(options: FirebaseConfig.options);
+    if (FirebaseConfig.useEmulators) {
+      const host = String.fromEnvironment('FIREBASE_EMULATOR_HOST',
+          defaultValue: '127.0.0.1');
+      await FirebaseAuth.instance.useAuthEmulator(host, 9099);
+      FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+    }
+  } catch (_) {
+    runApp(const _SetupApp(
+        message:
+            'Aurora could not connect to the configured services. Check your Firebase configuration or start the emulators. The standalone demo works without a backend.'));
+    return;
+  }
   // Set Firebase Auth language for hosted messages (e.g., password reset emails)
   try {
-    final deviceLang = WidgetsBinding.instance.platformDispatcher.locale.languageCode;
+    final deviceLang =
+        WidgetsBinding.instance.platformDispatcher.locale.languageCode;
     await FirebaseAuth.instance.setLanguageCode(deviceLang);
   } catch (_) {/* ignore */}
-  await NotificationService.instance.init();
-  await NotificationService.instance.requestPermissions();
-  // Schedule journal reminder if not already set (non-forced call).
-  await NotificationService.instance.scheduleDailyJournalReminder();
+  // Ask for permissions only from the explicit Settings action.
+  if (!kIsWeb) {
+    try {
+      await NotificationService.instance.init();
+    } catch (error) {
+      debugPrint('Notifications unavailable: $error');
+    }
+  }
   runApp(const AuroraApp());
 }
 
@@ -100,4 +113,16 @@ class _AuthGate extends StatelessWidget {
       },
     );
   }
+}
+
+class _SetupApp extends StatelessWidget {
+  const _SetupApp({required this.message});
+  final String message;
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+          home: Scaffold(
+              body: Center(
+        child: Padding(
+            padding: const EdgeInsets.all(24), child: SelectableText(message)),
+      )));
 }

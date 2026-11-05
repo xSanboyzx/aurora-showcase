@@ -106,16 +106,16 @@ class _AiChatScreenState extends State<AiChatScreen> {
     for (final doc in qs.docs) {
       final d = doc.data();
       final createdAt = (d['createdAt'] as Timestamp?)?.toDate();
-      final when = createdAt != null
-          ? _formatDate(createdAt)
-          : 'Unknown date';
+      final when = createdAt != null ? _formatDate(createdAt) : 'Unknown date';
       final mood = (d['mood'] as String?)?.trim().toLowerCase() ?? 'neutral';
       final emoji = moodEmoji(mood);
       final title = ((d['title'] as String?) ?? '').trim();
       final content = ((d['content'] as String?) ?? '').trim();
-      final snippet = content.length > 240 ? '${content.substring(0, 240)}…' : content;
+      final snippet =
+          content.length > 240 ? '${content.substring(0, 240)}…' : content;
 
-      buffer.writeln('- $when [$mood $emoji] ${title.isEmpty ? '(untitled)' : title}');
+      buffer.writeln(
+          '- $when [$mood $emoji] ${title.isEmpty ? '(untitled)' : title}');
       if (snippet.isNotEmpty) {
         buffer.writeln('  • ${snippet.replaceAll('\n', ' ')}');
       }
@@ -182,14 +182,16 @@ class _AiChatScreenState extends State<AiChatScreen> {
         journalContext: _journalContext,
       );
       final fallback = _proposeTitleFromExchange(text, reply);
-      await _setConversationTitle((modelTitle.trim().isEmpty) ? fallback : modelTitle.trim());
+      await _setConversationTitle(
+          (modelTitle.trim().isEmpty) ? fallback : modelTitle.trim());
     }
   }
 
   Future<void> _loadUserContext() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final data = doc.data();
     if (data == null) return;
 
@@ -198,7 +200,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
     final displayName = (data['displayName'] as String?)?.trim();
     final pronouns = (data['pronouns'] as String?)?.trim();
     final birthdayTs = data['birthday'];
-    final birthday = birthdayTs is Timestamp ? _formatDate(birthdayTs.toDate()) : null;
+    final birthday =
+        birthdayTs is Timestamp ? _formatDate(birthdayTs.toDate()) : null;
     final height = fmtNum(data['height']);
     final weight = fmtNum(data['weight']);
     final program = (data['program'] as String?)?.trim();
@@ -207,14 +210,22 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
     final buf = StringBuffer();
     buf.writeln('STUDENT PROFILE CONTEXT:');
-    if (displayName != null && displayName.isNotEmpty) buf.writeln('- Name: $displayName');
-    if (pronouns != null && pronouns.isNotEmpty) buf.writeln('- Pronouns: $pronouns');
+    if (displayName != null && displayName.isNotEmpty) {
+      buf.writeln('- Name: $displayName');
+    }
+    if (pronouns != null && pronouns.isNotEmpty) {
+      buf.writeln('- Pronouns: $pronouns');
+    }
     if (birthday != null) buf.writeln('- Birthday: $birthday');
-    if (program != null && program.isNotEmpty) buf.writeln('- Program: $program');
+    if (program != null && program.isNotEmpty) {
+      buf.writeln('- Program: $program');
+    }
     if (yearOfStudy.isNotEmpty) buf.writeln('- Year of Study: $yearOfStudy');
     if (height.isNotEmpty) buf.writeln('- Height: $height');
     if (weight.isNotEmpty) buf.writeln('- Weight: $weight');
-    if (bio != null && bio.isNotEmpty) buf.writeln('- Bio: ${bio.replaceAll('\n', ' ')}');
+    if (bio != null && bio.isNotEmpty) {
+      buf.writeln('- Bio: ${bio.replaceAll('\n', ' ')}');
+    }
 
     setState(() {
       _userContext = buf.isNotEmpty ? buf.toString() : null;
@@ -225,7 +236,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
   Widget build(BuildContext context) {
     const bg = Color(0xFFF5EFE7);
     const ink = Color(0xFF2F2E2C);
-    final bool inShell = context.findAncestorWidgetOfExactType<AuroraShell>() != null;
+    final bool inShell =
+        context.findAncestorWidgetOfExactType<AuroraShell>() != null;
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
@@ -284,7 +296,10 @@ class _AiChatScreenState extends State<AiChatScreen> {
                           : Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: const [
-                        BoxShadow(blurRadius: 10, color: Color(0x14000000), offset: Offset(0, 6)),
+                        BoxShadow(
+                            blurRadius: 10,
+                            color: Color(0x14000000),
+                            offset: Offset(0, 6)),
                       ],
                     ),
                     child: m.fromUser
@@ -352,7 +367,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
                 const mapping = [0, 1, 2, 3, 4];
                 final shellIndex = mapping[i];
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => AuroraShell(initialIndex: shellIndex)),
+                  MaterialPageRoute(
+                      builder: (_) => AuroraShell(initialIndex: shellIndex)),
                   (route) => false,
                 );
               },
@@ -411,7 +427,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
 
   /// Persists a single message inside the current conversation and updates
   /// the parent conversation's `updatedAt` timestamp for sorting in history.
-  Future<void> _appendMessageToFirestore(String text, {required bool fromUser}) async {
+  Future<void> _appendMessageToFirestore(String text,
+      {required bool fromUser}) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || _conversationId == null) return;
     final convoRef = FirebaseFirestore.instance
@@ -425,7 +442,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
       'isUser': fromUser,
       'createdAt': FieldValue.serverTimestamp(),
     });
-    await convoRef.set({'updatedAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+    await convoRef.set(
+        {'updatedAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
   }
 
   String _proposeTitleFromExchange(String userText, String aiText) {
@@ -445,7 +463,9 @@ class _AiChatScreenState extends State<AiChatScreen> {
         .doc(uid)
         .collection('aiConversations')
         .doc(_conversationId);
-    await convRef.set({'title': title, 'updatedAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+    await convRef.set(
+        {'title': title, 'updatedAt': FieldValue.serverTimestamp()},
+        SetOptions(merge: true));
     setState(() {
       _conversationTitle = title;
     });
@@ -488,18 +508,22 @@ class _AiChatScreenState extends State<AiChatScreen> {
                   final title = (d.data()['title'] as String?) ?? '(untitled)';
                   return ListTile(
                     leading: const Icon(Icons.chat_bubble_outline),
-                    title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    title: Text(title,
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
                     // Hide raw doc id from UI; optionally show last updated timestamp if available
                     subtitle: Builder(builder: (_) {
                       final updatedAt = d.data()['updatedAt'];
                       String? when;
                       if (updatedAt is Timestamp) {
                         final t = updatedAt.toDate();
-                        when = '${t.year}-${t.month.toString().padLeft(2, '0')}-${t.day.toString().padLeft(2, '0')}';
+                        when =
+                            '${t.year}-${t.month.toString().padLeft(2, '0')}-${t.day.toString().padLeft(2, '0')}';
                       }
                       return when == null
                           ? const SizedBox.shrink()
-                          : Text('Updated: $when', style: const TextStyle(fontSize: 12, color: Colors.black54));
+                          : Text('Updated: $when',
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.black54));
                     }),
                     onTap: () async {
                       // Close sheet first (safe synchronous use of context), then load conversation.
@@ -553,19 +577,19 @@ class _AiChatScreenState extends State<AiChatScreen> {
         .collection('aiConversations')
         .doc(convId);
     final convSnap = await convRef.get();
-    final q = await convRef
-        .collection('messages')
-        .orderBy('createdAt')
-        .get();
+    final q = await convRef.collection('messages').orderBy('createdAt').get();
     final msgs = q.docs
-        .map((d) => _ChatMessage(text: (d['text'] as String?) ?? '', fromUser: (d['isUser'] as bool?) ?? false))
+        .map((d) => _ChatMessage(
+            text: (d['text'] as String?) ?? '',
+            fromUser: (d['isUser'] as bool?) ?? false))
         .toList();
     setState(() {
       _conversationId = convId;
       _messages
         ..clear()
         ..addAll(msgs);
-      _conversationTitle = (convSnap.data()?['title'] as String?) ?? _conversationTitle;
+      _conversationTitle =
+          (convSnap.data()?['title'] as String?) ?? _conversationTitle;
     });
   }
 
@@ -597,8 +621,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
           decoration: const InputDecoration(hintText: 'Enter title'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text.trim()), child: const Text('Save')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+              child: const Text('Save')),
         ],
       ),
     );
@@ -606,7 +633,8 @@ class _AiChatScreenState extends State<AiChatScreen> {
     await _setConversationTitle(newTitle);
   }
 
-  Future<void> _editSpecificConversationTitle(String convId, String currentTitle) async {
+  Future<void> _editSpecificConversationTitle(
+      String convId, String currentTitle) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
     final controller = TextEditingController(text: currentTitle);
@@ -620,8 +648,11 @@ class _AiChatScreenState extends State<AiChatScreen> {
           decoration: const InputDecoration(hintText: 'Enter title'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text.trim()), child: const Text('Save')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+              child: const Text('Save')),
         ],
       ),
     );
@@ -631,14 +662,15 @@ class _AiChatScreenState extends State<AiChatScreen> {
         .doc(uid)
         .collection('aiConversations')
         .doc(convId);
-    await convRef.set({'title': newTitle, 'updatedAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+    await convRef.set(
+        {'title': newTitle, 'updatedAt': FieldValue.serverTimestamp()},
+        SetOptions(merge: true));
     if (_conversationId == convId) {
       setState(() {
         _conversationTitle = newTitle;
       });
     }
   }
-
 }
 
 class _ChatMessage {
@@ -686,7 +718,9 @@ Widget _buildFormattedAiMessage(String raw, Color ink) {
           spans.add(TextSpan(text: line.substring(cursor, match.start)));
         }
         final boldContent = match.group(1)!;
-        spans.add(TextSpan(text: boldContent, style: const TextStyle(fontWeight: FontWeight.w600)));
+        spans.add(TextSpan(
+            text: boldContent,
+            style: const TextStyle(fontWeight: FontWeight.w600)));
         cursor = match.end;
       }
       if (cursor < line.length) {
@@ -708,12 +742,15 @@ Widget _buildFormattedAiMessage(String raw, Color ink) {
         final markers = <RegExpMatch>[];
         markers.addAll(italicUnderscore.allMatches(txt));
         markers.addAll(italicAsterisk.allMatches(txt));
-        markers.sort((a,b)=> a.start.compareTo(b.start));
+        markers.sort((a, b) => a.start.compareTo(b.start));
         for (final m in markers) {
           if (m.start > pos) {
-            refined.add(TextSpan(text: txt.substring(pos, m.start), style: span.style));
+            refined.add(
+                TextSpan(text: txt.substring(pos, m.start), style: span.style));
           }
-          refined.add(TextSpan(text: m.group(1)!, style: const TextStyle(fontStyle: FontStyle.italic)));
+          refined.add(TextSpan(
+              text: m.group(1)!,
+              style: const TextStyle(fontStyle: FontStyle.italic)));
           pos = m.end;
         }
         if (pos < txt.length) {
@@ -729,10 +766,12 @@ Widget _buildFormattedAiMessage(String raw, Color ink) {
         int pos = 0;
         for (final match in codeRegex.allMatches(txt)) {
           if (match.start > pos) {
-            codeFinal.add(TextSpan(text: txt.substring(pos, match.start), style: span.style));
+            codeFinal.add(TextSpan(
+                text: txt.substring(pos, match.start), style: span.style));
           }
-            final codeContent = match.group(1)!;
-          const codeStyle = TextStyle(fontFamily: 'monospace', backgroundColor: Color(0x14000000));
+          final codeContent = match.group(1)!;
+          const codeStyle = TextStyle(
+              fontFamily: 'monospace', backgroundColor: Color(0x14000000));
           final combined = span.style?.merge(codeStyle) ?? codeStyle;
           codeFinal.add(TextSpan(text: codeContent, style: combined));
           pos = match.end;
@@ -767,7 +806,8 @@ Widget _buildFormattedAiMessage(String raw, Color ink) {
           ),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Text(trimmedRight, style: const TextStyle(fontFamily: 'monospace', fontSize: 13)),
+            child: Text(trimmedRight,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 13)),
           ),
         ));
         continue;
@@ -795,7 +835,8 @@ Widget _buildFormattedAiMessage(String raw, Color ink) {
         continue;
       }
       // Bullet / ordered list lines
-      final bulletMatch = RegExp(r'^(\s*)([*\-•]|\d{1,3}[.)])\s+(.*)').firstMatch(trimmedRight);
+      final bulletMatch =
+          RegExp(r'^(\s*)([*\-•]|\d{1,3}[.)])\s+(.*)').firstMatch(trimmedRight);
       if (bulletMatch != null) {
         final indentSpaces = bulletMatch.group(1)!.length;
         final marker = bulletMatch.group(2)!;
@@ -803,7 +844,8 @@ Widget _buildFormattedAiMessage(String raw, Color ink) {
         // Nested bullet cleanup: remove a leading secondary marker
         content = content.replaceFirst(RegExp(r'^[*\-•]\s+'), '');
         final isOrdered = RegExp(r'^\d').hasMatch(marker);
-        final displayMarker = isOrdered ? marker.replaceAll(RegExp(r'[)]'), '.').trim() : '•';
+        final displayMarker =
+            isOrdered ? marker.replaceAll(RegExp(r'[)]'), '.').trim() : '•';
         final leftPad = indentSpaces * 2.0; // scale indentation
         children.add(Padding(
           padding: EdgeInsets.only(left: leftPad, bottom: 4),
@@ -814,7 +856,8 @@ Widget _buildFormattedAiMessage(String raw, Color ink) {
                 width: 22,
                 child: Text(
                   isOrdered ? displayMarker : displayMarker,
-                  style: TextStyle(fontSize: 16, color: ink, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      fontSize: 16, color: ink, fontWeight: FontWeight.w600),
                 ),
               ),
               Expanded(child: RichText(text: parseInline(content))),
@@ -830,7 +873,10 @@ Widget _buildFormattedAiMessage(String raw, Color ink) {
       ));
     }
 
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: children);
+    return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: children);
   } catch (_) {
     return Text(raw, style: TextStyle(color: ink));
   }

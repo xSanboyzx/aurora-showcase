@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../config/app_mode.dart';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
@@ -20,14 +21,27 @@ import 'package:flutter/foundation.dart';
 class RemoteResourceService {
   RemoteResourceService._();
   static final instance = RemoteResourceService._();
-  static const _realInspireEndpoint = 'https://api.realinspire.live/v1/quotes/random';
+  static const _realInspireEndpoint =
+      'https://api.realinspire.live/v1/quotes/random';
   final _rand = Random();
   bool _loggedFailure = false;
 
   static const List<Quote> _fallbackList = [
-    Quote(text: 'You are doing your best.', author: 'Aurora', isFallback: true, source: 'Fallback'),
-    Quote(text: 'Small steps still move you forward.', author: 'Aurora', isFallback: true, source: 'Fallback'),
-    Quote(text: 'Rest is productive too.', author: 'Aurora', isFallback: true, source: 'Fallback'),
+    Quote(
+        text: 'You are doing your best.',
+        author: 'Aurora',
+        isFallback: true,
+        source: 'Fallback'),
+    Quote(
+        text: 'Small steps still move you forward.',
+        author: 'Aurora',
+        isFallback: true,
+        source: 'Fallback'),
+    Quote(
+        text: 'Rest is productive too.',
+        author: 'Aurora',
+        isFallback: true,
+        source: 'Fallback'),
   ];
 
   /// Fetches a random motivational quote from the remote provider.
@@ -37,13 +51,23 @@ class RemoteResourceService {
   ///
   /// Optional [client] can be injected for testing; always closed in `finally`.
   Future<Quote> fetchRandomQuote({http.Client? client}) async {
+    if (AppMode.isDemo) {
+      return const Quote(
+          text: 'Small steps still move you forward.',
+          author: 'Aurora',
+          isFallback: true,
+          source: 'Demo');
+    }
     client ??= http.Client();
     try {
-      final resp = await client.get(Uri.parse(_realInspireEndpoint)); // single GET per request cycle
+      final resp = await client
+          .get(Uri.parse(_realInspireEndpoint))
+          .timeout(const Duration(seconds: 10)); // single GET per request cycle
       if (resp.statusCode == 200) {
         final decoded = jsonDecode(resp.body); // decode JSON (expected list)
         if (decoded is List && decoded.isNotEmpty) {
-          final first = decoded.first; // API currently returns one-element array
+          final first =
+              decoded.first; // API currently returns one-element array
           if (first is Map<String, dynamic>) {
             final text = (first['content'] as String?)?.trim(); // quote content
             final author = (first['author'] as String?)?.trim(); // author name
@@ -63,7 +87,8 @@ class RemoteResourceService {
       throw HttpException('Status ${resp.statusCode}');
     } catch (e) {
       if (kDebugMode && !_loggedFailure) {
-        debugPrint('RealInspire fetch failed: $e'); // log only first failure to avoid spam
+        debugPrint(
+            'RealInspire fetch failed: $e'); // log only first failure to avoid spam
         _loggedFailure = true;
       }
       return _fallbackList[_rand.nextInt(_fallbackList.length)];
@@ -79,7 +104,11 @@ class Quote {
   final String author;
   final bool isFallback; // true if served from local fallback list
   final String source; // 'RealInspire' | 'Fallback'
-  const Quote({required this.text, required this.author, required this.isFallback, required this.source});
+  const Quote(
+      {required this.text,
+      required this.author,
+      required this.isFallback,
+      required this.source});
 }
 
 /// Simple custom HttpException for clearer error semantics without importing

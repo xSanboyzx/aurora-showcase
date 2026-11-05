@@ -379,6 +379,7 @@ class _ADHDHelpPageState extends State<ADHDHelpPage>
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
+          tooltip: 'Back',
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
               color: Color(0xFF12385C)),
           onPressed: () => Navigator.pop(context),
@@ -425,8 +426,8 @@ class _ADHDHelpPageState extends State<ADHDHelpPage>
                               borderRadius: BorderRadius.circular(999),
                               boxShadow: [
                                 BoxShadow(
-                                  color:
-                                      const Color(0xFF64B5F6).withValues(alpha: 0.3),
+                                  color: const Color(0xFF64B5F6)
+                                      .withValues(alpha: 0.3),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),

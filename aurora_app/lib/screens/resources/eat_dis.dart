@@ -393,7 +393,8 @@ class _EatingDisordersHelpPageState extends State<EatingDisordersHelpPage> {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFD5C1FA).withValues(alpha: 0.7)),
+        border:
+            Border.all(color: const Color(0xFFD5C1FA).withValues(alpha: 0.7)),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFCE9EEF).withValues(alpha: 0.18),

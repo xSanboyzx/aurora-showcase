@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 /// SettingsScreen
 /// Core & extended profile editing surface. Upgrades legacy manual date
 /// parsing to intl DateFormat, adds optional fields (pronouns, program,
@@ -42,10 +43,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadProfile() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
-    final snap = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final snap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
     final data = snap.data();
     if (data != null) {
-      _displayNameCtrl.text = (data['displayName'] as String?) ?? (data['fullName'] as String?) ?? '';
+      _displayNameCtrl.text = (data['displayName'] as String?) ??
+          (data['fullName'] as String?) ??
+          '';
       final ts = data['birthday'];
       if (ts is Timestamp) {
         final d = ts.toDate();
@@ -63,6 +69,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {});
     }
   }
+
   /// Parses yyyy-MM-dd strictly; enforces boundaries (>=1900, <= today).
   DateTime? _tryParseDate(String input) {
     if (input.trim().isEmpty) return null;
@@ -79,7 +86,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// Opens a Material date picker, defaulting to birthday or ~18 years ago.
   Future<void> _pickDate() async {
     final now = DateTime.now();
-    final initialDate = _tryParseDate(_birthdayCtrl.text) ?? DateTime(now.year - 18, now.month, now.day);
+    final initialDate = _tryParseDate(_birthdayCtrl.text) ??
+        DateTime(now.year - 18, now.month, now.day);
     final firstDate = DateTime(1900);
     final lastDate = now;
     final picked = await showDatePicker(
@@ -99,7 +107,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (birthday == null) return null;
     final now = DateTime.now();
     int age = now.year - birthday.year;
-    if (now.month < birthday.month || (now.month == birthday.month && now.day < birthday.day)) {
+    if (now.month < birthday.month ||
+        (now.month == birthday.month && now.day < birthday.day)) {
       age--;
     }
     return age;
@@ -110,13 +119,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
-      final displayName = _displayNameCtrl.text.trim().isEmpty ? null : _displayNameCtrl.text.trim();
+      final displayName = _displayNameCtrl.text.trim().isEmpty
+          ? null
+          : _displayNameCtrl.text.trim();
       final birthday = _tryParseDate(_birthdayCtrl.text);
-      final height = _heightCtrl.text.trim().isEmpty ? null : double.tryParse(_heightCtrl.text.trim());
-      final weight = _weightCtrl.text.trim().isEmpty ? null : double.tryParse(_weightCtrl.text.trim());
-      final pronouns = _pronounsCtrl.text.trim().isEmpty ? null : _pronounsCtrl.text.trim();
-      final program = _programCtrl.text.trim().isEmpty ? null : _programCtrl.text.trim();
-      final yearOfStudy = _yearCtrl.text.trim().isEmpty ? null : int.tryParse(_yearCtrl.text.trim());
+      final height = _heightCtrl.text.trim().isEmpty
+          ? null
+          : double.tryParse(_heightCtrl.text.trim());
+      final weight = _weightCtrl.text.trim().isEmpty
+          ? null
+          : double.tryParse(_weightCtrl.text.trim());
+      final pronouns =
+          _pronounsCtrl.text.trim().isEmpty ? null : _pronounsCtrl.text.trim();
+      final program =
+          _programCtrl.text.trim().isEmpty ? null : _programCtrl.text.trim();
+      final yearOfStudy = _yearCtrl.text.trim().isEmpty
+          ? null
+          : int.tryParse(_yearCtrl.text.trim());
       final bio = _bioCtrl.text.trim().isEmpty ? null : _bioCtrl.text.trim();
       await AuthService.instance.updateProfile(
         displayName: displayName,
@@ -129,11 +148,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         bio: bio,
       );
       if (!mounted) return;
-      showAuroraSnackBar(context, 'Profile updated', variant: AuroraSnackVariant.success);
+      showAuroraSnackBar(context, 'Profile updated',
+          variant: AuroraSnackVariant.success);
       // If Settings is shown as a tab inside AuroraShell, do not pop the
       // route (popping would expose a blank screen). Only pop when this page
       // was pushed as a standalone route.
-      final inShell = context.findAncestorWidgetOfExactType<AuroraShell>() != null;
+      final inShell =
+          context.findAncestorWidgetOfExactType<AuroraShell>() != null;
       if (!inShell && Navigator.canPop(context)) {
         Navigator.pop(context);
       }
@@ -177,7 +198,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Center(child: SmallGlowingCandle()),
           ),
         ),
-        title: const Text('Settings', style: TextStyle(color: Color(0xFF2F2E2C))),
+        title:
+            const Text('Settings', style: TextStyle(color: Color(0xFF2F2E2C))),
       ),
       backgroundColor: const Color(0xFFF5EFE7),
       body: SafeArea(
@@ -188,9 +210,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Profile', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: Color(0xFF2F2E2C))),
+                const Text('Profile',
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2F2E2C))),
                 const SizedBox(height: 16),
-
                 _LabeledField(
                   label: 'Display name',
                   child: TextFormField(
@@ -200,9 +225,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     validator: (v) => null,
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
                 _LabeledField(
                   label: 'Birthday',
                   helper: age != null ? 'Age: $age' : null,
@@ -212,10 +235,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: TextFormField(
                           controller: _birthdayCtrl,
                           readOnly: true,
-                          decoration: const InputDecoration(hintText: 'YYYY-MM-DD'),
+                          decoration:
+                              const InputDecoration(hintText: 'YYYY-MM-DD'),
                           validator: (v) {
                             if (v == null || v.isEmpty) return null; // optional
-                            return _tryParseDate(v) == null ? 'Invalid date' : null;
+                            return _tryParseDate(v) == null
+                                ? 'Invalid date'
+                                : null;
                           },
                         ),
                       ),
@@ -227,14 +253,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
                 _LabeledField(
                   label: 'Height (cm)',
                   child: TextFormField(
                     controller: _heightCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(hintText: 'e.g., 175'),
                     validator: (v) {
                       if (v == null || v.isEmpty) return null;
@@ -244,14 +269,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
                 _LabeledField(
                   label: 'Weight (kg)',
                   child: TextFormField(
                     controller: _weightCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(hintText: 'e.g., 70'),
                     validator: (v) {
                       if (v == null || v.isEmpty) return null;
@@ -261,15 +285,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                 ),
-
                 const SizedBox(height: 24),
-                const Text('Optional Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF2F2E2C))),
+                const Text('Optional Details',
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2F2E2C))),
                 const SizedBox(height: 12),
                 _LabeledField(
                   label: 'Pronouns',
                   child: TextFormField(
                     controller: _pronounsCtrl,
-                    decoration: const InputDecoration(hintText: 'e.g., she/her, he/him, they/them'),
+                    decoration: const InputDecoration(
+                        hintText: 'e.g., she/her, he/him, they/them'),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -278,7 +306,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: TextFormField(
                     controller: _programCtrl,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(hintText: 'e.g., Computer Science'),
+                    decoration: const InputDecoration(
+                        hintText: 'e.g., Computer Science'),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -286,7 +315,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   label: 'Year of Study',
                   child: TextFormField(
                     controller: _yearCtrl,
-                    keyboardType: const TextInputType.numberWithOptions(signed: false, decimal: false),
+                    keyboardType: const TextInputType.numberWithOptions(
+                        signed: false, decimal: false),
                     decoration: const InputDecoration(hintText: 'e.g., 2'),
                     validator: (v) {
                       if (v == null || v.isEmpty) return null;
@@ -302,7 +332,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: TextFormField(
                     controller: _bioCtrl,
                     maxLines: 3,
-                    decoration: const InputDecoration(hintText: 'Short bio or notes (optional)'),
+                    decoration: const InputDecoration(
+                        hintText: 'Short bio or notes (optional)'),
                     validator: (v) {
                       if (v != null && v.length > 300) return 'Max 300 chars';
                       return null;
@@ -310,12 +341,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(height: 28),
-
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _saving ? null : _save,
-                    child: _saving ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save'),
+                    child: _saving
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('Save'),
                   ),
                 )
               ],
@@ -338,12 +373,14 @@ class _LabeledField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 14, color: Color(0xFF6F6C66))),
+        Text(label,
+            style: const TextStyle(fontSize: 14, color: Color(0xFF6F6C66))),
         const SizedBox(height: 6),
         child,
         if (helper != null) ...[
           const SizedBox(height: 4),
-          Text(helper!, style: const TextStyle(fontSize: 12, color: Color(0xFF6F6C66))),
+          Text(helper!,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6F6C66))),
         ]
       ],
     );

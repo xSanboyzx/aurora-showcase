@@ -45,15 +45,18 @@ class NotificationService {
   /// Initializes timezone data + platform specific notification settings.
   /// Safe to call multiple times; subsequent calls are no‑ops.
   Future<void> init() async {
+    if (kIsWeb) return;
     if (_initialized) return;
 
     // 1. init timezones
     tz.initializeTimeZones(); // load bundled timezone database (necessary for zonedSchedule correctness)
     // if you want to be extra explicit:
-    tz.setLocalLocation(tz.getLocation(tz.local.name)); // ensure local location explicitly set (defensive clarity)
+    tz.setLocalLocation(tz.getLocation(tz.local
+        .name)); // ensure local location explicitly set (defensive clarity)
 
     // 2. android init
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     // 3. iOS init
     const iosSettings = DarwinInitializationSettings(
@@ -75,7 +78,8 @@ class NotificationService {
     );
 
     // Android channel creation (redundant if exists).
-    final androidPlatform = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>(); // access Android-specific APIs if available
+    final androidPlatform = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>(); // access Android-specific APIs if available
     if (androidPlatform != null) {
       await androidPlatform.createNotificationChannel(
         const AndroidNotificationChannel(
@@ -93,18 +97,25 @@ class NotificationService {
   /// Requests user notification permissions (safe multi‑call).
   /// Returns true if permissions are considered granted.
   Future<bool> requestPermissions() async {
-    if (_permissionsRequested) return true; // fast path: we already asked this session
+    if (kIsWeb) return false;
+    if (_permissionsRequested) {
+      return true; // fast path: we already asked this session
+    }
     bool granted = true;
-    final ios = _plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>(); // iOS permission request
+    final ios = _plugin.resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>(); // iOS permission request
     if (ios != null) {
-      final res = await ios.requestPermissions(alert: true, badge: true, sound: true);
+      final res =
+          await ios.requestPermissions(alert: true, badge: true, sound: true);
       granted = res ?? false;
     }
-    final macos = _plugin.resolvePlatformSpecificImplementation<MacOSFlutterLocalNotificationsPlugin>(); // macOS request (similar flags)
+    final macos = _plugin.resolvePlatformSpecificImplementation<
+        MacOSFlutterLocalNotificationsPlugin>(); // macOS request (similar flags)
     if (macos != null) {
       await macos.requestPermissions(alert: true, badge: true, sound: true);
     }
-    final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>(); // Android 13+ runtime permission
+    final android = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>(); // Android 13+ runtime permission
     if (android != null) {
       final aGranted = await android.requestNotificationsPermission();
       if (aGranted == null) {
@@ -137,13 +148,15 @@ class NotificationService {
     String body = 'Take a minute to write in your journal.',
     bool force = false,
   }) async {
+    if (kIsWeb) return;
     if (!_initialized) {
       await init();
     }
     await requestPermissions();
 
     final prefs = await SharedPreferences.getInstance();
-    final already = prefs.getBool(_prefDailyScheduled) ?? false; // persisted flag prevents duplicate schedule
+    final already = prefs.getBool(_prefDailyScheduled) ??
+        false; // persisted flag prevents duplicate schedule
     if (already && !force) return;
 
     const androidDetails = AndroidNotificationDetails(
@@ -161,7 +174,8 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    final scheduled = _nextInstanceOfTime(hour, minute); // compute next occurrence (today or tomorrow)
+    final scheduled = _nextInstanceOfTime(
+        hour, minute); // compute next occurrence (today or tomorrow)
 
     try {
       await _plugin.zonedSchedule(
@@ -174,7 +188,8 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time, // repeat daily at same local clock time
+        matchDateTimeComponents:
+            DateTimeComponents.time, // repeat daily at same local clock time
       );
       await prefs.setBool(_prefDailyScheduled, true);
     } catch (e) {
@@ -187,6 +202,7 @@ class NotificationService {
 
   /// Cancels the previously scheduled daily journal reminder notification and clears persistence flag.
   Future<void> cancelDailyJournalReminder() async {
+    if (kIsWeb) return;
     await _plugin.cancel(_dailyId);
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefDailyScheduled);
@@ -243,7 +259,8 @@ class NotificationService {
         tzTime,
         details,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
       );
     } catch (e) {
       if (kDebugMode) {
@@ -253,10 +270,12 @@ class NotificationService {
   }
 
   /// Returns all pending scheduled notifications.
-  Future<List<PendingNotificationRequest>> pending() => _plugin.pendingNotificationRequests();
+  Future<List<PendingNotificationRequest>> pending() =>
+      _plugin.pendingNotificationRequests();
 
   /// Cancels all notifications and clears the persisted daily reminder flag.
   Future<void> cancelAll() async {
+    if (kIsWeb) return;
     await _plugin.cancelAll();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefDailyScheduled);
@@ -281,6 +300,7 @@ class NotificationService {
 void notificationTapBackground(NotificationResponse response) {
   // Currently we just log; real implementation could route based on payload.
   if (kDebugMode) {
-    debugPrint('Background notification tap: id=${response.id} payload=${response.payload}');
+    debugPrint(
+        'Background notification tap: id=${response.id} payload=${response.payload}');
   }
 }

@@ -54,7 +54,8 @@ class _ResourcesPageState extends State<ResourcesPage>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final bool inShell = context.findAncestorWidgetOfExactType<AuroraShell>() != null;
+    final bool inShell =
+        context.findAncestorWidgetOfExactType<AuroraShell>() != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -94,7 +95,8 @@ class _ResourcesPageState extends State<ResourcesPage>
             future: _quoteFuture,
             builder: (context, snap) {
               final quote = snap.data;
-              if (snap.connectionState == ConnectionState.done && _justRefreshed) {
+              if (snap.connectionState == ConnectionState.done &&
+                  _justRefreshed) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (!mounted) return;
                   final isFallback = quote?.isFallback ?? false;
@@ -266,7 +268,8 @@ class _ResourcesPageState extends State<ResourcesPage>
               selectedIndex: 2,
               onDestinationSelected: (i) {
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => AuroraShell(initialIndex: i)),
+                  MaterialPageRoute(
+                      builder: (_) => AuroraShell(initialIndex: i)),
                   (route) => false,
                 );
               },

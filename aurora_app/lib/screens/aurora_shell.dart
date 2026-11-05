@@ -5,6 +5,8 @@ import 'resources.dart';
 import 'help_near_me.dart';
 import 'ai_chat.dart';
 import 'settings_screen.dart';
+import '../config/app_mode.dart';
+import '../demo/demo_info_screen.dart';
 
 /// AuroraShell
 /// Provides a persistent bottom navigation bar to switch between
@@ -28,13 +30,23 @@ class AuroraShell extends StatefulWidget {
 class _AuroraShellState extends State<AuroraShell> {
   late int _index;
 
-  final _pages = const [
-    DashboardScreen(),
-    JournalScreen(),
-    ResourcesPage(),
-    HelpNearMePage(),
-    AiChatScreen(),
-    SettingsScreen(),
+  late final _pages = <Widget>[
+    const DashboardScreen(),
+    const JournalScreen(),
+    const ResourcesPage(),
+    AppMode.isDemo
+        ? const DemoInfoScreen(
+            title: 'Help Nearby',
+            description:
+                'Location services are unavailable in the demo. No location permission is requested.')
+        : const HelpNearMePage(),
+    AppMode.isDemo ? const DemoChatScreen() : const AiChatScreen(),
+    AppMode.isDemo
+        ? const DemoInfoScreen(
+            title: 'Settings',
+            description:
+                'Accounts and notifications are unavailable in this demo. Use Reset demo to restore the sample journal.')
+        : const SettingsScreen(),
   ];
 
   @override

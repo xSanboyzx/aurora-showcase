@@ -13,10 +13,10 @@ class GlowingCandle extends StatelessWidget {
     final theme = Theme.of(context);
     // Default palette used on the landing screen; when useThemeColors is true
     // we blend with the colorScheme for better app cohesion on darker themes.
-    final Color glowColor = useThemeColors
-      ? theme.colorScheme.primary
-      : const Color(0xFFF5C97B);
-    final Color candleBody = useThemeColors ? theme.colorScheme.surface : const Color(0xFFFFFBF5);
+    final Color glowColor =
+        useThemeColors ? theme.colorScheme.primary : const Color(0xFFF5C97B);
+    final Color candleBody =
+        useThemeColors ? theme.colorScheme.surface : const Color(0xFFFFFBF5);
 
     final double outer = size;
     final double middle = size * 0.72;
@@ -68,13 +68,13 @@ class GlowingCandle extends StatelessWidget {
             decoration: BoxDecoration(
               color: candleBody,
               borderRadius: BorderRadius.circular(bodyWidth / 3),
-                boxShadow: [
-                  BoxShadow(
-                    color: glowColor.withValues(alpha: 0.18),
-                    blurRadius: size * 0.24,
-                    spreadRadius: size * 0.03,
-                  ),
-                ],
+              boxShadow: [
+                BoxShadow(
+                  color: glowColor.withValues(alpha: 0.18),
+                  blurRadius: size * 0.24,
+                  spreadRadius: size * 0.03,
+                ),
+              ],
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,

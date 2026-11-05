@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 /// LoginScreen
 /// Email/password authentication form with password reset flow and variants
 /// for user feedback via Aurora snackbars. Validation occurs locally before
@@ -43,7 +44,8 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       if (!mounted) return;
-      showAuroraSnackBar(context, 'Signed in successfully', variant: AuroraSnackVariant.success);
+      showAuroraSnackBar(context, 'Signed in successfully',
+          variant: AuroraSnackVariant.success);
       // AuthGate will rebuild to Dashboard automatically; just pop back to root.
       Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
@@ -61,14 +63,16 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleResetPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
-      showAuroraSnackBar(context, 'Enter a valid email to reset password', variant: AuroraSnackVariant.info);
+      showAuroraSnackBar(context, 'Enter a valid email to reset password',
+          variant: AuroraSnackVariant.info);
       return;
     }
     setState(() => _resetting = true);
     try {
       await AuthService.instance.sendPasswordResetEmail(email);
       if (mounted) {
-        showAuroraSnackBar(context, 'Password reset email sent to $email', variant: AuroraSnackVariant.success);
+        showAuroraSnackBar(context, 'Password reset email sent to $email',
+            variant: AuroraSnackVariant.success);
       }
     } catch (e) {
       final msg = AuthService.instance.mapAuthError(e);
@@ -94,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 60),
-                  
+
                   // Back button
                   IconButton(
                     onPressed: () => Navigator.pop(context),
@@ -103,9 +107,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: EdgeInsets.zero,
                     alignment: Alignment.centerLeft,
                   ),
-                  
+
                   const SizedBox(height: 40),
-                  
+
                   // Welcome back text
                   const Text(
                     'Welcome\nback',
@@ -117,9 +121,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   const Text(
                     'Sign in to continue your journey',
                     style: TextStyle(
@@ -128,9 +132,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       fontWeight: FontWeight.w400,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 56),
-                  
+
                   // Email field
                   CustomTextField(
                     controller: _emailController,
@@ -148,9 +152,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       return null;
                     },
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Password field
                   CustomTextField(
                     controller: _passwordController,
@@ -160,7 +164,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: _obscurePassword,
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        _obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
                         color: const Color(0xFF6F6C66),
                       ),
                       onPressed: () {
@@ -177,9 +183,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       return null;
                     },
                   ),
-                  
+
                   const SizedBox(height: 16),
-                  
+
                   // Forgot password
                   Align(
                     alignment: Alignment.centerRight,
@@ -195,9 +201,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Login button
                   AuthButton(
                     text: 'Sign in',
@@ -205,9 +211,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     isLoading: _isLoading,
                   ),
 
-                  
                   const SizedBox(height: 32),
-                  
+
                   // Sign up prompt
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -244,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 40),
                 ],
               ),

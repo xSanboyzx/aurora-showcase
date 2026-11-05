@@ -17,6 +17,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../services/auth_service.dart';
+import '../config/app_mode.dart';
 // settings_screen.dart is not used here; removed to satisfy analyzer
 import 'aurora_shell.dart';
 import '../widgets/small_glowing_candle.dart';
@@ -24,13 +25,12 @@ import '../widgets/small_glowing_candle.dart';
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
-  static const _text =
-      Color(0xFF2F2E2C); // neutral text used across app
+  static const _text = Color(0xFF2F2E2C); // neutral text used across app
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final user = FirebaseAuth.instance.currentUser;
+    final user = AppMode.isDemo ? null : FirebaseAuth.instance.currentUser;
     final uid = user?.uid;
 
     return Scaffold(
@@ -52,26 +52,30 @@ class DashboardScreen extends StatelessWidget {
         title: const Text('Dashboard'),
         actions: [
           IconButton(
-            onPressed: () async {
-              final ok = await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Sign out?'),
-                  content: const Text('You can sign back in any time.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      child: const Text('Cancel'),
-                    ),
-                    FilledButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('Sign out'),
-                    ),
-                  ],
-                ),
-              );
-              if (ok == true) await AuthService.instance.signOut();
-            },
+            onPressed: AppMode.isDemo
+                ? null
+                : () async {
+                    final ok = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Sign out?'),
+                        content: const Text('You can sign back in any time.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('Cancel'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Sign out'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (ok == true && !AppMode.isDemo) {
+                      await AuthService.instance.signOut();
+                    }
+                  },
             icon: const Icon(Icons.logout_rounded),
           ),
           const SizedBox(width: 4),
@@ -149,7 +153,10 @@ class DashboardScreen extends StatelessWidget {
                                 );
                               },
                             )
-                          : const _ProfileCard(name: 'Welcome'),
+                          : _ProfileCard(
+                              name: AppMode.isDemo
+                                  ? 'Welcome back, Alex'
+                                  : 'Welcome'),
                     ),
                   ),
                 ),
@@ -266,14 +273,14 @@ class _ProfileCard extends StatelessWidget {
                   height: 54,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        colors: [
-                          colorScheme.primary.withValues(alpha: 0.72),
-                          colorScheme.primaryContainer.withValues(alpha: 0.58),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                    gradient: LinearGradient(
+                      colors: [
+                        colorScheme.primary.withValues(alpha: 0.72),
+                        colorScheme.primaryContainer.withValues(alpha: 0.58),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
                   child: const Icon(Icons.person_rounded,
                       size: 30, color: Colors.white),
@@ -384,7 +391,7 @@ class _ActionTile extends StatelessWidget {
             onTap: onTap,
             splashColor: Colors.white.withValues(alpha: 0.15),
             highlightColor: Colors.transparent,
-                child: BackdropFilter(
+            child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
               child: Container(
                 padding: const EdgeInsets.all(16),
@@ -392,7 +399,8 @@ class _ActionTile extends StatelessWidget {
                   gradient: LinearGradient(
                     colors: [
                       colorScheme.surface.withValues(alpha: 0.95),
-                      colorScheme.surfaceContainerHighest.withValues(alpha: 0.95),
+                      colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.95),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -421,7 +429,8 @@ class _ActionTile extends StatelessWidget {
                         gradient: LinearGradient(
                           colors: [
                             colorScheme.primary.withValues(alpha: 0.72),
-                            colorScheme.primaryContainer.withValues(alpha: 0.58),
+                            colorScheme.primaryContainer
+                                .withValues(alpha: 0.58),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,

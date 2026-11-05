@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 /// CommunityChatPage
 /// Placeholder community messaging surface partitioned into personal chats
 /// and multi-channel servers. Current implementation is static (no backend)
@@ -286,7 +287,8 @@ class _ServerCard extends StatelessWidget {
                   .map((c) => Chip(
                         label: Text(c),
                         backgroundColor: data.color.withValues(alpha: 0.12),
-                        side: BorderSide(color: data.color.withValues(alpha: 0.35)),
+                        side: BorderSide(
+                            color: data.color.withValues(alpha: 0.35)),
                       ))
                   .toList(),
             ),

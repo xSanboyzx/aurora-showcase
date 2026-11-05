@@ -27,9 +27,13 @@ class AuthService {
   /// Returns the created [User] or throws a `FirebaseAuthException` / wrapped
   /// `FirebaseException` for unexpected platform errors. UI should map these
   /// via [mapAuthError].
-  Future<User?> signUp({required String email, required String password, required String displayName}) async {
+  Future<User?> signUp(
+      {required String email,
+      required String password,
+      required String displayName}) async {
     try {
-      final cred = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      final cred = await _auth.createUserWithEmailAndPassword(
+          email: email, password: password);
 
       // Update display name in Firebase Auth profile (so other services/UI immediate reflect new name)
       await cred.user?.updateDisplayName(displayName);
@@ -49,7 +53,8 @@ class AuthService {
         }, SetOptions(merge: true));
       } on FirebaseException catch (e) {
         // ignore: avoid_print
-        print('Firestore profile write failed: ${e.code} ${e.message}'); // non-fatal; auth succeeded so user can still proceed
+        print(
+            'Firestore profile write failed: ${e.code} ${e.message}'); // non-fatal; auth succeeded so user can still proceed
       }
 
       return user;
@@ -57,26 +62,36 @@ class AuthService {
       rethrow; // pass through so UI layer can map codes to friendly messages
     } on PlatformException catch (e) {
       // Convert to a Firebase-like error for unified handling
-      throw FirebaseException(plugin: 'platform', code: e.code, message: e.message); // unify error shape
+      throw FirebaseException(
+          plugin: 'platform',
+          code: e.code,
+          message: e.message); // unify error shape
     } catch (e) {
       // Fallback to generic error type so UI does not show just "Unexpected error"
-      throw FirebaseException(plugin: 'auth', code: 'unknown', message: e.toString()); // generic fallback
+      throw FirebaseException(
+          plugin: 'auth',
+          code: 'unknown',
+          message: e.toString()); // generic fallback
     }
   }
 
   /// Signs an existing user in using email/password.
   /// Throws `FirebaseAuthException` on known credential issues (wrong password,
   /// user not found, etc.).
-  Future<User?> signIn({required String email, required String password}) async {
+  Future<User?> signIn(
+      {required String email, required String password}) async {
     try {
-      final cred = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      final cred = await _auth.signInWithEmailAndPassword(
+          email: email, password: password);
       return cred.user;
     } on FirebaseAuthException {
       rethrow; // propagate for mapping while preserving stack trace
     } on PlatformException catch (e) {
-      throw FirebaseException(plugin: 'platform', code: e.code, message: e.message);
+      throw FirebaseException(
+          plugin: 'platform', code: e.code, message: e.message);
     } catch (e) {
-      throw FirebaseException(plugin: 'auth', code: 'unknown', message: e.toString());
+      throw FirebaseException(
+          plugin: 'auth', code: 'unknown', message: e.toString());
     }
   }
 
@@ -98,11 +113,14 @@ class AuthService {
     String? bio,
   }) async {
     final user = _auth.currentUser;
-    if (user == null) throw FirebaseAuthException(code: 'no-user', message: 'Not signed in');
+    if (user == null) {
+      throw FirebaseAuthException(code: 'no-user', message: 'Not signed in');
+    }
     try {
       // Update auth profile if displayName provided
       if (displayName != null && displayName.trim().isNotEmpty) {
-        await user.updateDisplayName(displayName.trim()); // keep auth profile synchronized
+        await user.updateDisplayName(
+            displayName.trim()); // keep auth profile synchronized
       }
       await user.reload();
 
@@ -111,7 +129,8 @@ class AuthService {
       };
       if (displayName != null && displayName.trim().isNotEmpty) {
         updateData['displayName'] = displayName.trim();
-        updateData['fullName'] = displayName.trim(); // keep legacy field in sync
+        updateData['fullName'] =
+            displayName.trim(); // keep legacy field in sync
       }
       if (birthday != null) {
         updateData['birthday'] = Timestamp.fromDate(birthday);
@@ -120,21 +139,29 @@ class AuthService {
         updateData['heightCm'] = heightCm;
       }
       if (weightKg != null) updateData['weightKg'] = weightKg;
-      if (pronouns != null && pronouns.trim().isNotEmpty) updateData['pronouns'] = pronouns.trim();
-      if (program != null && program.trim().isNotEmpty) updateData['program'] = program.trim();
+      if (pronouns != null && pronouns.trim().isNotEmpty) {
+        updateData['pronouns'] = pronouns.trim();
+      }
+      if (program != null && program.trim().isNotEmpty) {
+        updateData['program'] = program.trim();
+      }
       if (yearOfStudy != null) updateData['yearOfStudy'] = yearOfStudy;
       if (bio != null && bio.trim().isNotEmpty) updateData['bio'] = bio.trim();
 
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(updateData, SetOptions(merge: true)); // merge strategy preserves untouched fields
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+          updateData,
+          SetOptions(merge: true)); // merge strategy preserves untouched fields
     } on FirebaseException {
       rethrow;
     } catch (e) {
-      throw FirebaseException(plugin: 'firestore', code: 'unknown', message: e.toString());
+      throw FirebaseException(
+          plugin: 'firestore', code: 'unknown', message: e.toString());
     }
   }
 
   /// Signs the current user out (idempotent if already signed out).
   Future<void> signOut() async => _auth.signOut();
+
   /// Sends password reset email; surfaces Firebase exceptions directly for UI mapping.
   Future<void> sendPasswordResetEmail(String email) async {
     await _auth.sendPasswordResetEmail(email: email);

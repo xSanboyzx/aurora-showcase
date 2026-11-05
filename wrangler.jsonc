@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "aurora-showcase",
+  "compatibility_date": "2026-11-05",
+  "assets": {
+    "directory": "./aurora_app/build/web",
+    "not_found_handling": "single-page-application"
+  }
+}

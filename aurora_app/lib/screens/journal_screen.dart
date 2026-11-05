@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/journal_entry.dart';
 import 'package:intl/intl.dart';
 
 import '../services/journal_service.dart';
 import '../widgets/auth/custom_text_field.dart';
 import '../widgets/aurora_snackbar.dart';
-import '../services/notifications_service.dart';
 import 'timeline_tab.dart';
 import 'aurora_shell.dart';
 import '../widgets/small_glowing_candle.dart';
@@ -137,8 +135,9 @@ class _JournalScreenState extends State<JournalScreen> {
   String _formatWhen(DateTime when) {
     final now = DateTime.now();
     final local = when.toLocal();
-    final isSameDay =
-        now.year == local.year && now.month == local.month && now.day == local.day;
+    final isSameDay = now.year == local.year &&
+        now.month == local.month &&
+        now.day == local.day;
     final yesterday = now.subtract(const Duration(days: 1));
     final isYesterday = yesterday.year == local.year &&
         yesterday.month == local.month &&
@@ -200,7 +199,6 @@ class _JournalScreenState extends State<JournalScreen> {
         'Journal entry saved! 📝',
         variant: AuroraSnackVariant.success,
       );
-      await NotificationService.instance.scheduleDailyJournalReminder();
     } catch (e) {
       if (!mounted) return;
       showAuroraSnackBar(
@@ -217,14 +215,15 @@ class _JournalScreenState extends State<JournalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    final bool inShell = context.findAncestorWidgetOfExactType<AuroraShell>() != null;
+    final uid = JournalService.instance.userId;
+    final bool inShell =
+        context.findAncestorWidgetOfExactType<AuroraShell>() != null;
     final cs = Theme.of(context).colorScheme;
 
-      return Scaffold(
+    return Scaffold(
+      backgroundColor: cs.surface,
+      appBar: AppBar(
         backgroundColor: cs.surface,
-        appBar: AppBar(
-          backgroundColor: cs.surface,
         elevation: 0,
         centerTitle: true,
         leading: const Padding(
@@ -242,40 +241,41 @@ class _JournalScreenState extends State<JournalScreen> {
         iconTheme: const IconThemeData(color: Color(0xFF0F1A25)),
       ),
       bottomNavigationBar: inShell
-        ? null
-        : NavigationBar(
-            selectedIndex: 1,
-            onDestinationSelected: (i) {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => AuroraShell(initialIndex: i)),
-                (route) => false,
-              );
-            },
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.dashboard_outlined),
-                selectedIcon: Icon(Icons.dashboard_rounded),
-                label: 'Home',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.menu_book_outlined),
-                selectedIcon: Icon(Icons.menu_book_rounded),
-                label: 'Journal',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.library_books_outlined),
-                selectedIcon: Icon(Icons.library_books_rounded),
-                label: 'Resources',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings_rounded),
-                label: 'Settings',
-              ),
-            ],
-          ),
+          ? null
+          : NavigationBar(
+              selectedIndex: 1,
+              onDestinationSelected: (i) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                      builder: (_) => AuroraShell(initialIndex: i)),
+                  (route) => false,
+                );
+              },
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.dashboard_outlined),
+                  selectedIcon: Icon(Icons.dashboard_rounded),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.menu_book_outlined),
+                  selectedIcon: Icon(Icons.menu_book_rounded),
+                  label: 'Journal',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.library_books_outlined),
+                  selectedIcon: Icon(Icons.library_books_rounded),
+                  label: 'Resources',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.settings_outlined),
+                  selectedIcon: Icon(Icons.settings_rounded),
+                  label: 'Settings',
+                ),
+              ],
+            ),
       resizeToAvoidBottomInset: true,
-      body: user == null
+      body: uid == null
           ? const Center(child: Text('Please sign in to view your journal'))
           : Column(
               children: [
@@ -285,7 +285,7 @@ class _JournalScreenState extends State<JournalScreen> {
                 Expanded(
                   child: _currentTab == 0
                       ? _buildEntriesContent(context)
-                      : TimelineTab(uid: user.uid),
+                      : TimelineTab(uid: uid),
                 ),
               ],
             ),
@@ -297,13 +297,13 @@ class _JournalScreenState extends State<JournalScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Container(
         height: 42,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.98),
-              borderRadius: BorderRadius.circular(999),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.98),
+          borderRadius: BorderRadius.circular(999),
         ),
         child: Row(
           children: [
-                _TabChip(
+            _TabChip(
               text: 'Entries',
               selected: _currentTab == 0,
               onTap: () => setState(() => _currentTab = 0),
@@ -319,17 +319,17 @@ class _JournalScreenState extends State<JournalScreen> {
     );
   }
 
-    Widget _buildEntriesContent(BuildContext context) {
-      final cs = Theme.of(context).colorScheme;
-      final moodTint = Color.alphaBlend(
-        _moodColor(_selectedMood).withValues(alpha: 0.5),
-        cs.surface,
-      );
+  Widget _buildEntriesContent(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final moodTint = Color.alphaBlend(
+      _moodColor(_selectedMood).withValues(alpha: 0.5),
+      cs.surface,
+    );
     return SafeArea(
       child: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding:
-            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 24),
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24),
         child: Column(
           children: [
             // Entry input card
@@ -519,18 +519,37 @@ class _JournalScreenState extends State<JournalScreen> {
                           child: DropdownButton<String>(
                             value: _filterMood,
                             items: [
-                              DropdownMenuItem(value: 'all', child: _moodItem('🌐', 'All')),
-                              DropdownMenuItem(value: 'happy', child: _moodItem('😊', 'Happy')),
-                              DropdownMenuItem(value: 'sad', child: _moodItem('😢', 'Sad')),
-                              DropdownMenuItem(value: 'anxious', child: _moodItem('😰', 'Anxious')),
-                              DropdownMenuItem(value: 'angry', child: _moodItem('😠', 'Angry')),
-                              DropdownMenuItem(value: 'excited', child: _moodItem('🤩', 'Excited')),
-                              DropdownMenuItem(value: 'calm', child: _moodItem('😌', 'Calm')),
-                              DropdownMenuItem(value: 'tired', child: _moodItem('🥱', 'Tired')),
-                              DropdownMenuItem(value: 'grateful', child: _moodItem('🙏', 'Grateful')),
-                              DropdownMenuItem(value: 'neutral', child: _moodItem('😐', 'Neutral')),
+                              DropdownMenuItem(
+                                  value: 'all', child: _moodItem('🌐', 'All')),
+                              DropdownMenuItem(
+                                  value: 'happy',
+                                  child: _moodItem('😊', 'Happy')),
+                              DropdownMenuItem(
+                                  value: 'sad', child: _moodItem('😢', 'Sad')),
+                              DropdownMenuItem(
+                                  value: 'anxious',
+                                  child: _moodItem('😰', 'Anxious')),
+                              DropdownMenuItem(
+                                  value: 'angry',
+                                  child: _moodItem('😠', 'Angry')),
+                              DropdownMenuItem(
+                                  value: 'excited',
+                                  child: _moodItem('🤩', 'Excited')),
+                              DropdownMenuItem(
+                                  value: 'calm',
+                                  child: _moodItem('😌', 'Calm')),
+                              DropdownMenuItem(
+                                  value: 'tired',
+                                  child: _moodItem('🥱', 'Tired')),
+                              DropdownMenuItem(
+                                  value: 'grateful',
+                                  child: _moodItem('🙏', 'Grateful')),
+                              DropdownMenuItem(
+                                  value: 'neutral',
+                                  child: _moodItem('😐', 'Neutral')),
                             ],
-                            onChanged: (v) => setState(() => _filterMood = v ?? 'all'),
+                            onChanged: (v) =>
+                                setState(() => _filterMood = v ?? 'all'),
                           ),
                         ),
                       ),
@@ -562,8 +581,7 @@ class _JournalScreenState extends State<JournalScreen> {
                         _FilterChipPill(
                           label: 'Anxious',
                           selected: _filterMood == 'anxious',
-                          onTap: () =>
-                              setState(() => _filterMood = 'anxious'),
+                          onTap: () => setState(() => _filterMood = 'anxious'),
                         ),
                         _FilterChipPill(
                           label: 'Angry',
@@ -583,8 +601,7 @@ class _JournalScreenState extends State<JournalScreen> {
                         _FilterChipPill(
                           label: 'Grateful',
                           selected: _filterMood == 'grateful',
-                          onTap: () =>
-                              setState(() => _filterMood = 'grateful'),
+                          onTap: () => setState(() => _filterMood = 'grateful'),
                         ),
                         _FilterChipPill(
                           label: 'Neutral',
@@ -595,8 +612,7 @@ class _JournalScreenState extends State<JournalScreen> {
                         _FilterChipPill(
                           label: 'All time',
                           selected: _entryDateFilter == 'all',
-                          onTap: () =>
-                              setState(() => _entryDateFilter = 'all'),
+                          onTap: () => setState(() => _entryDateFilter = 'all'),
                         ),
                         _FilterChipPill(
                           label: 'Last 7 days',
@@ -612,47 +628,48 @@ class _JournalScreenState extends State<JournalScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  StreamBuilder<List<JournalEntry>>(
                     stream: JournalService.instance.journalEntriesStream(),
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState ==
-                          ConnectionState.waiting) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Padding(
                           padding: EdgeInsets.only(top: 24.0, bottom: 40.0),
                           child: Center(child: CircularProgressIndicator()),
                         );
                       }
 
-                      List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
-                          snapshot.data?.docs ?? [];
+                      if (snapshot.hasError) {
+                        return const Padding(
+                            padding: EdgeInsets.all(24),
+                            child: Text(
+                                'Could not load journal entries. Please try again.'));
+                      }
+                      List<JournalEntry> docs = snapshot.data ?? [];
 
-                      final q =
-                          _searchController.text.trim().toLowerCase();
+                      final q = _searchController.text.trim().toLowerCase();
 
                       if (_filterMood != 'all') {
                         docs = docs
                             .where((d) =>
-                                (d.data()['mood'] ?? 'neutral') ==
-                                _filterMood)
+                                (d.toMap()['mood'] ?? 'neutral') == _filterMood)
                             .toList();
                       }
 
                       if (_entryDateFilter != 'all') {
                         final now = DateTime.now();
-                        final limitDays =
-                            _entryDateFilter == '7' ? 7 : 30;
+                        final limitDays = _entryDateFilter == '7' ? 7 : 30;
                         docs = docs.where((d) {
-                          final data = d.data();
+                          final data = d.toMap();
                           final ts = data['createdAt'];
-                          if (ts is! Timestamp) return false;
-                          final dt = ts.toDate();
+                          if (ts is! DateTime) return false;
+                          final dt = ts;
                           return now.difference(dt).inDays < limitDays;
                         }).toList();
                       }
 
                       if (q.isNotEmpty) {
                         docs = docs.where((d) {
-                          final title = (d.data()['title'] ?? '')
+                          final title = (d.toMap()['title'] ?? '')
                               .toString()
                               .toLowerCase();
                           return title.contains(q);
@@ -671,29 +688,37 @@ class _JournalScreenState extends State<JournalScreen> {
                       return ListView.separated(
                         padding: const EdgeInsets.all(16),
                         itemCount: docs.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: 12),
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemBuilder: (context, index) {
                           final doc = docs[index];
-                          final data = doc.data();
+                          final data = doc.toMap();
                           final title = (data['title'] ?? '') as String;
-                          final content =
-                              (data['content'] ?? '') as String;
-                          final mood =
-                              (data['mood'] ?? 'neutral') as String;
+                          final content = (data['content'] ?? '') as String;
+                          final mood = (data['mood'] ?? 'neutral') as String;
                           final ts = data['createdAt'];
                           DateTime? created;
-                          if (ts is Timestamp) {
-                            created = ts.toDate();
+                          if (ts is DateTime) {
+                            created = ts;
                           }
 
                           return Dismissible(
                             key: ValueKey(doc.id),
                             direction: DismissDirection.endToStart,
-                            onDismissed: (_) {
-                              JournalService.instance.deleteEntry(doc.id);
+                            confirmDismiss: (_) async {
+                              try {
+                                await JournalService.instance
+                                    .deleteEntry(doc.id);
+                                return true;
+                              } catch (_) {
+                                if (context.mounted) {
+                                  showAuroraSnackBar(context,
+                                      'Could not delete the entry. Please try again.',
+                                      variant: AuroraSnackVariant.error);
+                                }
+                                return false;
+                              }
                             },
                             background: Container(
                               alignment: Alignment.centerRight,
@@ -731,8 +756,8 @@ class _JournalScreenState extends State<JournalScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black
-                                          .withValues(alpha: 0.04),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.04),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     ),
@@ -740,8 +765,7 @@ class _JournalScreenState extends State<JournalScreen> {
                                 ),
                                 padding: const EdgeInsets.all(14),
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       children: [
@@ -758,8 +782,7 @@ class _JournalScreenState extends State<JournalScreen> {
                                           ),
                                         ),
                                         Container(
-                                          padding: const EdgeInsets
-                                              .symmetric(
+                                          padding: const EdgeInsets.symmetric(
                                             horizontal: 10,
                                             vertical: 4,
                                           ),
@@ -769,8 +792,7 @@ class _JournalScreenState extends State<JournalScreen> {
                                                 BorderRadius.circular(999),
                                           ),
                                           child: Row(
-                                            mainAxisSize:
-                                                MainAxisSize.min,
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Text(
                                                 _moodEmoji[mood] ?? '🙂',
@@ -783,8 +805,7 @@ class _JournalScreenState extends State<JournalScreen> {
                                                 mood.replaceAll('_', ' '),
                                                 style: const TextStyle(
                                                   fontSize: 12,
-                                                  color:
-                                                      Color(0xFF2F2E2C),
+                                                  color: Color(0xFF2F2E2C),
                                                 ),
                                               ),
                                             ],
@@ -839,6 +860,7 @@ class _JournalScreenState extends State<JournalScreen> {
     final titleCtrl = TextEditingController(text: initialTitle);
     final contentCtrl = TextEditingController(text: initialContent);
     String mood = initialMood;
+    bool saving = false;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -890,18 +912,23 @@ class _JournalScreenState extends State<JournalScreen> {
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.16),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.16),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.28),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.28),
                       width: 2,
                     ),
                   ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
                 items: [
                   DropdownMenuItem(
@@ -984,15 +1011,25 @@ class _JournalScreenState extends State<JournalScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: () async {
-                    if (Navigator.canPop(ctx)) {
-                      Navigator.of(ctx).pop();
+                    if (saving) return;
+                    saving = true;
+                    try {
+                      await JournalService.instance.updateEntry(
+                        entryId,
+                        title: titleCtrl.text,
+                        content: contentCtrl.text,
+                        mood: mood,
+                      );
+                      if (ctx.mounted) Navigator.of(ctx).pop();
+                    } catch (_) {
+                      if (ctx.mounted) {
+                        showAuroraSnackBar(ctx,
+                            'Could not save changes. Keep some text and try again.',
+                            variant: AuroraSnackVariant.error);
+                      }
+                    } finally {
+                      saving = false;
                     }
-                    await JournalService.instance.updateEntry(
-                      entryId,
-                      title: titleCtrl.text,
-                      content: contentCtrl.text,
-                      mood: mood,
-                    );
                   },
                   child: const Text(
                     'Save changes',
@@ -1008,6 +1045,8 @@ class _JournalScreenState extends State<JournalScreen> {
         );
       },
     );
+    titleCtrl.dispose();
+    contentCtrl.dispose();
   }
 }
 
@@ -1034,10 +1073,14 @@ class _TabChip extends StatelessWidget {
           margin: const EdgeInsets.all(5),
           padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
-            color: selected ? cs.primary.withValues(alpha: 0.40) : Colors.transparent,
+            color: selected
+                ? cs.primary.withValues(alpha: 0.40)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-              color: selected ? cs.primary.withValues(alpha: 0.28) : cs.surfaceContainerHighest,
+            border: Border.all(
+              color: selected
+                  ? cs.primary.withValues(alpha: 0.28)
+                  : cs.surfaceContainerHighest,
               width: selected ? 1.2 : 1.0,
             ),
           ),
@@ -1115,7 +1158,9 @@ class _MoodChip extends StatelessWidget {
           color: selected ? cs.primary.withValues(alpha: 0.40) : cs.surface,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? cs.primary.withValues(alpha: 0.36) : cs.surfaceContainerHighest,
+            color: selected
+                ? cs.primary.withValues(alpha: 0.36)
+                : cs.surfaceContainerHighest,
           ),
         ),
         child: Row(
@@ -1152,8 +1197,8 @@ class _PromptRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final prompts = _JournalScreenState._moodPrompts[mood] ??
-      _JournalScreenState._moodPrompts['default'] ??
-      const <String>[];
+        _JournalScreenState._moodPrompts['default'] ??
+        const <String>[];
 
     if (prompts.isEmpty) return const SizedBox.shrink();
 
@@ -1168,7 +1213,7 @@ class _PromptRow extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-                Wrap(
+        Wrap(
           spacing: 6,
           runSpacing: 4,
           children: [
@@ -1228,7 +1273,9 @@ class _FilterChipPill extends StatelessWidget {
           color: selected ? cs.primary.withValues(alpha: 0.40) : cs.surface,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? cs.primary.withValues(alpha: 0.36) : cs.surfaceContainerHighest,
+            color: selected
+                ? cs.primary.withValues(alpha: 0.36)
+                : cs.surfaceContainerHighest,
           ),
         ),
         child: Text(

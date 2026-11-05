@@ -3,7 +3,8 @@
 // Top section: summary mood trend (last 7/30 days averaged) rendered with a
 // smooth line chart. Below: date-grouped entries newest-first.
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/journal_entry.dart';
+import '../services/journal_service.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -34,17 +35,17 @@ class _TimelineTabState extends State<TimelineTab> {
   };
 
   // Filter docs to only those within the last [days] days based on createdAt.
-  List<QueryDocumentSnapshot<Map<String, dynamic>>> _filterDocsByDays(
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  List<JournalEntry> _filterDocsByDays(
+    List<JournalEntry> docs,
     int days,
   ) {
     if (docs.isEmpty) return []; // <-- removed `const`
     final now = DateTime.now();
     return docs.where((doc) {
-      final data = doc.data();
+      final data = doc.toMap();
       final ts = data['createdAt'];
-      if (ts is! Timestamp) return false;
-      final dt = ts.toDate();
+      if (ts is! DateTime) return false;
+      final dt = ts;
       // e.g., days = 7 → anything with difference < 7 days
       return now.difference(dt).inDays < days;
     }).toList();
@@ -52,11 +53,11 @@ class _TimelineTabState extends State<TimelineTab> {
 
   // Build mood → count map for the given window.
   Map<String, int> _buildMoodCounts(
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    List<JournalEntry> docs,
   ) {
     final Map<String, int> counts = {};
     for (final doc in docs) {
-      final data = doc.data();
+      final data = doc.toMap();
       final mood = (data['mood'] ?? 'neutral') as String;
       if (!_moodScore.containsKey(mood)) continue;
       counts[mood] = (counts[mood] ?? 0) + 1;
@@ -66,13 +67,13 @@ class _TimelineTabState extends State<TimelineTab> {
 
   // Average mood score over all docs in the window.
   double _computeAverageMood(
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    List<JournalEntry> docs,
   ) {
     if (docs.isEmpty) return 0;
     double sum = 0;
     int count = 0;
     for (final doc in docs) {
-      final mood = (doc.data()['mood'] ?? 'neutral') as String;
+      final mood = (doc.toMap()['mood'] ?? 'neutral') as String;
       final score = _moodScore[mood] ?? 2;
       sum += score;
       count++;
@@ -84,7 +85,7 @@ class _TimelineTabState extends State<TimelineTab> {
   // Build short "pattern insights" strings based on mood data & journaling.
   List<String> _buildInsights({
     required Map<DateTime, double> moodData,
-    required List<QueryDocumentSnapshot<Map<String, dynamic>>> windowDocs,
+    required List<JournalEntry> windowDocs,
     required int days,
   }) {
     final List<String> insights = [];
@@ -172,31 +173,29 @@ class _TimelineTabState extends State<TimelineTab> {
 
   @override
   Widget build(BuildContext context) {
-    final entriesStream = FirebaseFirestore.instance
-        .collection('users')
-        .doc(widget.uid)
-        .collection('journalEntries')
-        .orderBy('createdAt', descending: true)
-        .snapshots();
+    final entriesStream = JournalService.instance.journalEntriesStream();
 
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+    return StreamBuilder<List<JournalEntry>>(
       stream: entriesStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final docs = snapshot.data?.docs ?? [];
+        if (snapshot.hasError) {
+          return const Center(
+              child: Text('Could not load mood trends. Please try again.'));
+        }
+        final docs = snapshot.data ?? [];
 
         // 1) group by date for the list
-        final Map<String,
-            List<QueryDocumentSnapshot<Map<String, dynamic>>>> grouped = {};
+        final Map<String, List<JournalEntry>> grouped = {};
         for (final doc in docs) {
-          final data = doc.data();
+          final data = doc.toMap();
           final ts = data['createdAt'];
           DateTime date = DateTime.now();
-          if (ts is Timestamp) {
-            date = ts.toDate();
+          if (ts is DateTime) {
+            date = ts;
           }
           final key = DateFormat('yyyy-MM-dd').format(date);
           grouped.putIfAbsent(key, () => []);
@@ -327,7 +326,7 @@ class _TimelineTabState extends State<TimelineTab> {
   /// Builds a map (DateTime -> average mood score) for the last [days] days
   /// of journal entries. Missing days return 0.0 so the chart maintains shape.
   Map<DateTime, double> _buildMoodData(
-    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    List<JournalEntry> docs,
     int days,
   ) {
     final now = DateTime.now();
@@ -335,20 +334,20 @@ class _TimelineTabState extends State<TimelineTab> {
 
     // Initialize buckets for each day in the window.
     for (int i = 0; i < days; i++) {
-      final day = DateTime(now.year, now.month, now.day)
-          .subtract(Duration(days: i));
+      final day =
+          DateTime(now.year, now.month, now.day).subtract(Duration(days: i));
       final key = DateFormat('yyyy-MM-dd').format(day);
       dayScores[key] = [];
     }
 
     // Fill scores.
     for (final doc in docs) {
-      final data = doc.data();
+      final data = doc.toMap();
       final ts = data['createdAt'];
-      if (ts is! Timestamp) continue;
-      final dt = ts.toDate();
-      final dayKey = DateFormat('yyyy-MM-dd')
-          .format(DateTime(dt.year, dt.month, dt.day));
+      if (ts is! DateTime) continue;
+      final dt = ts;
+      final dayKey =
+          DateFormat('yyyy-MM-dd').format(DateTime(dt.year, dt.month, dt.day));
       if (!dayScores.containsKey(dayKey)) continue;
       final mood = (data['mood'] ?? 'neutral') as String;
       final score = _moodScore[mood] ?? 2;
@@ -358,13 +357,12 @@ class _TimelineTabState extends State<TimelineTab> {
     // Compute averages.
     final Map<DateTime, double> result = {};
     for (int i = 0; i < days; i++) {
-      final day = DateTime(now.year, now.month, now.day)
-          .subtract(Duration(days: i));
+      final day =
+          DateTime(now.year, now.month, now.day).subtract(Duration(days: i));
       final key = DateFormat('yyyy-MM-dd').format(day);
       final scores = dayScores[key]!;
-      final avg = scores.isEmpty
-          ? 0.0
-          : scores.reduce((a, b) => a + b) / scores.length;
+      final avg =
+          scores.isEmpty ? 0.0 : scores.reduce((a, b) => a + b) / scores.length;
       result[day] = avg;
     }
     return result;
@@ -497,6 +495,7 @@ class _MoodChartCard extends StatelessWidget {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
+                      interval: days == 7 ? 1 : 5,
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
                         if (index < 0 || index >= dates.length) {
@@ -520,10 +519,10 @@ class _MoodChartCard extends StatelessWidget {
                       },
                     ),
                   ),
-                  rightTitles:
-                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles:
-                      const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
@@ -544,8 +543,7 @@ class _MoodChartCard extends StatelessWidget {
                         return FlDotCirclePainter(
                           radius: 3.5,
                           color: isZero
-                              ? const Color(0xFF6F6C66)
-                                  .withValues(alpha: 0.35)
+                              ? const Color(0xFF6F6C66).withValues(alpha: 0.35)
                               : const Color(0xFFF2B8A0),
                           strokeWidth: 0,
                         );
@@ -744,9 +742,9 @@ class _MoodHeatmap extends StatelessWidget {
 
 /// Suggests gentle next steps based on mood + journaling consistency.
 class _RecommendedActionsCard extends StatelessWidget {
-  final double averageMood;    // 0–5
-  final double consistency;    // 0–100 (% of days with entries)
-  final String? dominantMood;  // most frequent mood string
+  final double averageMood; // 0–5
+  final double consistency; // 0–100 (% of days with entries)
+  final String? dominantMood; // most frequent mood string
 
   const _RecommendedActionsCard({
     required this.averageMood,
@@ -872,8 +870,6 @@ class _RecommendedActionsCard extends StatelessWidget {
   }
 }
 
-
-
 class _StatChip extends StatelessWidget {
   final String label;
   final String value;
@@ -998,7 +994,7 @@ class _PatternInsightsCard extends StatelessWidget {
 
 class _DayEntryGroup extends StatelessWidget {
   final String day;
-  final List<QueryDocumentSnapshot<Map<String, dynamic>>> entries;
+  final List<JournalEntry> entries;
   const _DayEntryGroup({
     required this.day,
     required this.entries,
@@ -1023,8 +1019,8 @@ class _DayEntryGroup extends StatelessWidget {
         const SizedBox(height: 8),
         for (final doc in entries)
           _TimelineEntryTile(
-            title: (doc.data()['title'] ?? '') as String,
-            mood: (doc.data()['mood'] ?? 'neutral') as String,
+            title: (doc.toMap()['title'] ?? '') as String,
+            mood: (doc.toMap()['mood'] ?? 'neutral') as String,
           ),
       ],
     );
