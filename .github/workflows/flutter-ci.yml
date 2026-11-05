@@ -1,5 +1,6 @@
 name: Aurora release checks
 on:
+  workflow_dispatch:
   push:
     branches: [main, showcase-release]
   pull_request:

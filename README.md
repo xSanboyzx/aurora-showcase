@@ -2,6 +2,10 @@
 
 A bounded polish release of the original five-person Flutter course project. The browser demo reuses the real dashboard, journal, timeline, and support tools with a fictional, session-only journal. AI examples are prerecorded. No account, location permission, notification permission, Firebase connection, or API key is required.
 
+Live demo: https://aurora-showcase.sanhith-amarathunge.workers.dev
+
+Portfolio case study: https://sanhithamarathunge.net/projects#project-aurora
+
 ## Run the demo
 
 Use **Flutter 3.35.3 / Dart 3.9.2**, matching CI and the verified release toolchain:
